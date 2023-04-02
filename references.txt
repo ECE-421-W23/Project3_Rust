@@ -1,0 +1,2 @@
+For structure: https://blog.logrocket.com/full-stack-rust-a-complete-tutorial-with-examples/
+For frontend: https://yew.rs/docs/tutorial
