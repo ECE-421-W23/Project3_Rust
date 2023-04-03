@@ -5,6 +5,7 @@ use yew::html::Scope;
 mod Home;
 mod HowToConnect4;
 mod HowToToot;
+mod TootOttoHuman;
 
 #[derive(Routable, Debug, Clone, PartialEq)]
 pub enum Route {
@@ -14,6 +15,8 @@ pub enum Route {
     HowToConnect4,
     #[at("/HowToToot")]
     HowToToot,
+    #[at("/TootOttoHuman")]
+    TootOttoHuman,
 }
 
 
@@ -58,9 +61,8 @@ impl App {
           <a href="#/Connect4Human" class="w3-padding w3-hover-white">{"Play Connect4 with Another Human"}</a>
           <br/>
             <Link<Route> to={Route::HowToToot}>{ "How to Play Toot"}</Link<Route>>
-          <a href="#/HowToToot" class="w3-padding w3-hover-white">{"How to Play TOOT-OTTO"}</a>
           <a href="#/TootOttoComputer" class="w3-padding w3-hover-white">{"Play Toot-Otto With Computer"}</a>
-          <a href="#/TootOttoHuman" class="w3-padding w3-hover-white">{"Play Toot-Otto With Another Human"}</a>
+            <Link<Route> to={Route::TootOttoHuman}>{ "Play Toot-Otto with Another Human"}</Link<Route>>
           <br/>
           <a href="#/ScoreBoard" class="w3-padding w3-hover-white">{"View Game History"}</a>
           <a href="#/Scores" class="w3-padding w3-hover-white">{"Score Board"}</a>
@@ -68,6 +70,21 @@ impl App {
         }
     }
 }
+
+fn switch(routes: Route) -> Html {
+    match routes {
+        Route::Home => html! {<Home::Home />},
+        Route::HowToConnect4 => html! {<HowToConnect4::HowToConnect4 />},
+        Route::HowToToot => html! {<HowToToot::HowToToot />},
+        Route::TootOttoHuman => html! {<TootOttoHuman::TootOttoHuman />},
+    }
+}
+
+fn main() {
+    yew::Renderer::<App>::new().render();
+    // yew::start_app::<App>();
+}
+
 
 // #[function_component(App)]
 // fn app() -> Html {
@@ -99,16 +116,3 @@ impl App {
 //         </div>
 //     }
 // }
-
-fn switch(routes: Route) -> Html {
-    match routes {
-        Route::Home => html! {<Home::Home />},
-        Route::HowToConnect4 => html! {<HowToConnect4::HowToConnect4 />},
-        Route::HowToToot => html! {<HowToToot::HowToToot />},
-    }
-}
-
-fn main() {
-    yew::Renderer::<App>::new().render();
-    // yew::start_app::<App>();
-}
