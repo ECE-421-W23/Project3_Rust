@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+#[derive(Clone)]
 pub struct TootOtto {
     board: [[Option<Piece>; 7]; 6],
     current_player: Player,
@@ -11,7 +12,7 @@ pub enum Piece {
     O,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 pub enum Player {
     Toot,
     Otto,
@@ -37,6 +38,24 @@ impl TootOtto {
 
     fn check_bounds(&self, col: usize) -> bool {
         col < 7
+    }
+
+    pub fn get_current_player(&self) -> Player{
+        self.current_player.clone()
+    }
+
+    pub fn get_grid(&self) -> [[Option<Piece>; 7]; 6] {
+        self.board.clone()
+    }
+
+    pub fn top_row(&self, col: usize) -> usize {
+        for row in (0..6).rev() {
+            if self.board[row][col].is_none() {
+                return row;
+            }
+        }
+        // If the column is full, return an index beyond the board's boundaries.
+        6
     }
 
     // function to make a move by Player Toot

@@ -4,7 +4,7 @@ use common::TootOtto::Player::Toot;
 
 fn main() {
     let mut game = TootOtto::new();
-    game.print_board();
+    // game.print_board();
     game.make_move_by_toot(0, Piece::O);
     game.make_move_by_otto(1, Piece::T);
     game.make_move_by_toot(2, Piece::T);

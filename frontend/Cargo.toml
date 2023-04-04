@@ -18,4 +18,30 @@ yew-router = "0.17.0"
 gloo-net = "0.2"
 serde = { version = "1.0", features = ["derive"] }
 wasm-bindgen-futures = "0.4"
+wasm-bindgen = "0.2"
 once_cell = "1"
+stdweb = "0.4.20"
+yew-canvas = "0.2.4"
+gloo = "0.3"
+gloo-utils = "0.1"
+js-sys = "0.3"
+
+
+[dependencies.web-sys]
+version = "0.3.61"
+features = [
+    "Navigator",
+    'Headers',
+    'Request',
+    'RequestInit',
+    'RequestMode',
+    'Response',
+    'Window',
+    'CanvasRenderingContext2d',
+    'Document',
+    'Element',
+    'HtmlCanvasElement',
+    'DomRect',
+    'Location',
+    'HtmlSelectElement',
+]
