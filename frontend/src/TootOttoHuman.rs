@@ -51,6 +51,140 @@ pub enum Msg {
     Record()
 }
 
+impl TootOttoHuman{
+    fn render_board(&mut self){
+        let canvas: HtmlCanvasElement = self.canvas.cast().unwrap();
+        let context: CanvasRenderingContext2d = canvas.get_context("2d").unwrap().unwrap().unchecked_into();
+        context.save();
+        context.set_fill_style(&JsValue::from("#99ffcc"));
+        context.set_font("bold 25px serif");
+        let board = self.game.borrow_mut().get_grid();
+        for (row, row_elems) in board.iter().enumerate(){
+            for(col, elem) in row_elems.iter().enumerate(){
+                if let Some(piece) = elem {
+                    context.set_fill_style(&JsValue::from("#99ffcc"));
+                    context.begin_path();
+                    context.arc(
+                        (75 * col + 100) as f64,
+                        (75 * row + 50) as f64,
+                        25.0,
+                        0.0,
+                        2.0 * PI,
+                    );
+                    context.fill();
+                    context.set_font("bold 25px serif");
+                    context.set_fill_style(&JsValue::from("#111"));
+                    let text = match piece {
+                        Piece::T => "T",
+                        Piece::O => "O",
+                    };
+                    context.fill_text(text, (75 * col + 92) as f64, (75 * row + 58) as f64);
+                }
+            }
+        }
+
+        context.restore();
+    }
+
+    fn render_background(&mut self){
+        let canvas: HtmlCanvasElement = self.canvas.cast().unwrap();
+        let context: CanvasRenderingContext2d = canvas.get_context("2d").unwrap().unwrap().unchecked_into();
+        context.save();
+        context.set_fill_style(&JsValue::from("#00bfff"));
+        context.begin_path();
+        for y in 0..6 {
+            for x in 0..7{
+                let err = context.arc(
+                    (75 * x + 100) as f64,
+                    (75 * y + 50) as f64,
+                    25.0,
+                    0.0,
+                    2.0 * PI,
+                );
+                context.rect((75 * x + 150) as f64, (75 * y) as f64, -100.0, 100.0);
+            }
+        }
+        context.fill();
+        context.restore();
+    }
+
+    fn check_winner(&mut self){
+        // TO-DO Add implementation to check for a draw
+        match self.game.borrow_mut().winner() {
+            None => {}
+            Some(x) => {
+                if x == Player::Toot {
+                    self.winner = self.p1_name.clone();
+                    self.is_game_over = true;
+                } else {
+                    self.winner = self.p2_name.clone();
+                    self.is_game_over = true;
+                }
+                let message = self.winner.to_string() + " wins - Click on game board to reset";
+                let canvas: HtmlCanvasElement = self.canvas.cast().unwrap();
+                let context: CanvasRenderingContext2d = canvas.get_context("2d").unwrap().unwrap().unchecked_into();
+                context.save();
+                context.set_font("bold 25px serif");
+                context.set_fill_style(&JsValue::from("#111"));
+                context.begin_path();
+                context.fill_text(&message, (150) as f64, (20) as f64);
+                context.restore();
+            }
+        };
+        if self.game.borrow_mut().is_draw() == true {
+            self.is_game_over = true;
+            let message = "It's a draw - Click on game board to reset";
+            let canvas: HtmlCanvasElement = self.canvas.cast().unwrap();
+            let context: CanvasRenderingContext2d = canvas.get_context("2d").unwrap().unwrap().unchecked_into();
+            context.save();
+            context.set_font("bold 25px serif");
+            context.set_fill_style(&JsValue::from("#111"));
+            context.begin_path();
+            context.fill_text(message, (150) as f64, (20) as f64);
+            context.restore();
+        }
+
+    }
+
+    fn make_move(&mut self, col: usize){
+        if self.selected_letter == 'T' {
+            match self.current_player {
+                Player::Toot => {
+                    self.game.borrow_mut().make_move_by_toot(col, Piece::T);
+                    self.current_player = Player::Otto;
+                }
+                Player::Otto => {
+                    self.game.borrow_mut().make_move_by_otto(col, Piece::T);
+                    self.current_player = Player::Toot;
+                }
+                Player::AI => {}
+            }
+        } else {
+            match self.current_player {
+                Player::Toot => {
+                    self.game.borrow_mut().make_move_by_toot(col, Piece::O);
+                    self.current_player = Player::Otto;
+                }
+                Player::Otto => {
+                    self.game.borrow_mut().make_move_by_otto(col, Piece::O);
+                    self.current_player = Player::Toot;
+                }
+                Player::AI => {}
+            }
+        }
+    }
+
+    fn new_game(&mut self){
+        self.game =  Rc::new(RefCell::new(TootOtto::new()));
+        self.winner = "".to_string();
+        self.is_game_over = false;
+        self.is_game_draw = false;
+        let canvas: HtmlCanvasElement = self.canvas.cast().unwrap();
+        let context: CanvasRenderingContext2d = canvas.get_context("2d").unwrap().unwrap().unchecked_into();
+        context.clear_rect(0 as f64, 0 as f64, canvas.width() as f64, canvas.height() as f64);
+    }
+}
+
 impl Component for TootOttoHuman {
     type Message = Msg;
     type Properties = ();
@@ -129,24 +263,7 @@ impl Component for TootOttoHuman {
                         .unwrap();
 
                     closure.forget();
-
-                    context.save();
-                    context.set_fill_style(&JsValue::from("#00bfff"));
-                    context.begin_path();
-                    for y in 0..6 {
-                        for x in 0..7{
-                            let err = context.arc(
-                                (75 * x + 100) as f64,
-                                (75 * y + 50) as f64,
-                                25.0,
-                                0.0,
-                                2.0 * PI,
-                            );
-                            context.rect((75 * x + 150) as f64, (75 * y) as f64, -100.0, 100.0);
-                        }
-                    }
-                    context.fill();
-                    context.restore();
+                    self.render_background();
                 }
             }
             Msg::EndGame => {}
@@ -162,103 +279,19 @@ impl Component for TootOttoHuman {
                     match column {
                         None => {}
                         Some(col) => {
-                            let game = self.game.clone();
+                            // let game = self.game.clone();
                             let row = self.game.borrow_mut().top_row(col);
                             if row != 10 {
-                                if self.selected_letter == 'T' {
-                                    match self.current_player {
-                                        Player::Toot => {
-                                            game.borrow_mut().make_move_by_toot(col, Piece::T);
-                                            self.current_player = Player::Otto;
-                                        }
-                                        Player::Otto => {
-                                            game.borrow_mut().make_move_by_otto(col, Piece::T);
-                                            self.current_player = Player::Toot;
-                                        }
-                                        Player::AI => {}
-                                    }
-                                } else {
-                                    match self.current_player {
-                                        Player::Toot => {
-                                            game.borrow_mut().make_move_by_toot(col, Piece::O);
-                                            self.current_player = Player::Otto;
-                                        }
-                                        Player::Otto => {
-                                            game.borrow_mut().make_move_by_otto(col, Piece::O);
-                                            self.current_player = Player::Toot;
-                                        }
-                                        Player::AI => {}
-                                    }
-                                }
-
-                                let canvas: HtmlCanvasElement = self.canvas.cast().unwrap();
-                                let context: CanvasRenderingContext2d = canvas.get_context("2d").unwrap().unwrap().unchecked_into();
-                                context.save();
-                                context.set_fill_style(&JsValue::from("#99ffcc"));
-                                context.begin_path();
-                                let err = context.arc(
-                                    (75 * col + 100) as f64,
-                                    (75 * row + 50) as f64,
-                                    25.0,
-                                    0.0,
-                                    2.0 * PI,
-                                );
-                                context.fill();
-                                context.restore();
-                                context.set_font("bold 25px serif");
-                                let mut text = "O";
-                                if self.selected_letter == 'T' {
-                                    text = "T";
-                                }
-                                context.fill_text(text, (75 * col + 92) as f64, (75 * row + 58) as f64);
-
-                                match game.borrow_mut().winner() {
-                                    None => {}
-                                    Some(x) => {
-                                        if x == Player::Toot {
-                                            self.winner = self.p1_name.clone();
-                                            self.is_game_over = true;
-                                        } else {
-                                            self.winner = self.p2_name.clone();
-                                            self.is_game_over = true;
-                                        }
-                                        let message = self.winner.to_string() + " wins - Click on game board to reset";
-                                        context.save();
-                                        context.set_fill_style(&JsValue::from("#111"));
-                                        context.begin_path();
-                                        context.fill_text(&message, (150) as f64, (20) as f64);
-                                        context.restore();
-                                    }
-                                };
+                                self.make_move(col);
+                                self.render_board();
+                                self.check_winner();
                             }
                         }
                     }
                 } else {
-                    self.game =  Rc::new(RefCell::new(TootOtto::new()));
-                    self.winner = "".to_string();
-                    self.is_game_over = false;
-                    self.is_game_draw = false;
-                    let canvas: HtmlCanvasElement = self.canvas.cast().unwrap();
-                    let context: CanvasRenderingContext2d = canvas.get_context("2d").unwrap().unwrap().unchecked_into();
-                    context.clear_rect(0 as f64, 0 as f64, canvas.width() as f64, canvas.height() as f64);
-                    let link = _ctx.link().clone();
-                    context.save();
-                    context.set_fill_style(&JsValue::from("#00bfff"));
-                    context.begin_path();
-                    for y in 0..6 {
-                        for x in 0..7{
-                            let err = context.arc(
-                                (75 * x + 100) as f64,
-                                (75 * y + 50) as f64,
-                                25.0,
-                                0.0,
-                                2.0 * PI,
-                            );
-                            context.rect((75 * x + 150) as f64, (75 * y) as f64, -100.0, 100.0);
-                        }
-                    }
-                    context.fill();
-                    context.restore();
+                    self.new_game();
+                    //let link = _ctx.link().clone();
+                    self.render_background();
                 }
             }
             Msg::Record() => {}

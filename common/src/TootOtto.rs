@@ -160,14 +160,15 @@ impl TootOtto {
                 }
             }
         }
-
-        // check for a draw
-        if self.board.iter().all(|row| row.iter().all(|cell| cell.is_some())) {
-            return Some(Player::Toot);
-        }
-
         // game is still running
         None
+    }
+
+    pub fn is_draw(&self) -> bool{
+        if self.board.iter().all(|row| row.iter().all(|cell| cell.is_some())) {
+            return true;
+        }
+        return false;
     }
 
     fn check_win(line: &[Option<Piece>; 4]) -> bool {
