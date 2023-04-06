@@ -54,18 +54,18 @@ impl TootOtto {
                 return row;
             }
         }
-        // If the column is full, return an index beyond the board's boundaries.
-        6
+        // If the column is full, return a large number.
+        10
     }
 
     // function to make a move by Player Toot
-    pub fn make_move_by_toot(&mut self, column: usize, piece: Piece) -> Result<(), String> {
+    pub fn make_move_by_toot(&mut self, column: usize, piece: Piece) {
         if self.current_player != Player::Toot {
-            return Err(String::from("Not Toot's turn"));
+            return;
         }
         // check if the given column is valid
         if column >= 7 {
-            return Err(String::from("Invalid column index"));
+            return;
         }
         // get the lowest available row in the selected column
         let mut row = None;
@@ -77,21 +77,20 @@ impl TootOtto {
         }
         // if the column is full, return an error
         if row.is_none() {
-            return Err(String::from("Selected column is full"));
+            return;
         }
         // place the Toot piece at the selected position
         self.board[row.unwrap()][column] = Some(piece);
         // switch to the next player (Otto)
         self.current_player = Player::Otto;
-        Ok(())
     }
 
-    pub fn make_move_by_otto(&mut self, column: usize, piece: Piece) -> Result<(), String> {
+    pub fn make_move_by_otto(&mut self, column: usize, piece: Piece) {
         if self.current_player != Player::Otto {
-            return Err(String::from("Not Otto's turn"));
+            return;
         }
         if column >= 7 {
-            return Err(String::from("Invalid column index"));
+            return;
         }
         // get the lowest available row in the selected column
         let mut row = None;
@@ -103,13 +102,12 @@ impl TootOtto {
         }
         // if the column is full, return an error
         if row.is_none() {
-            return Err(String::from("Selected column is full"));
+            return;
         }
         // place the Toot piece at the selected position
         self.board[row.unwrap()][column] = Some(piece);
         // switch to the next player (Toot)
         self.current_player = Player::Toot;
-        Ok(())
     }
 
     pub fn winner(&self) -> Option<Player> {
@@ -162,14 +160,15 @@ impl TootOtto {
                 }
             }
         }
-
-        // check for a draw
-        if self.board.iter().all(|row| row.iter().all(|cell| cell.is_some())) {
-            return Some(Player::Toot);
-        }
-
         // game is still running
         None
+    }
+
+    pub fn is_draw(&self) -> bool{
+        if self.board.iter().all(|row| row.iter().all(|cell| cell.is_some())) {
+            return true;
+        }
+        return false;
     }
 
     fn check_win(line: &[Option<Piece>; 4]) -> bool {
