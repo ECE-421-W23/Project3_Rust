@@ -11,14 +11,14 @@ pub enum Route {
 
 
 pub struct Connect4AI{
-    player1: Option<String>,
-    player2: Option<String>,
+    player1: String,
+    player2: String,
     difficulty: usize,
 }
 
 pub enum Msg{
     Connect4,
-    SetPlayer1Name(Option<String>),
+    SetPlayer1Name(String),
     SetDifficulty(usize),
 }
 
@@ -28,8 +28,8 @@ impl Component for Connect4AI {
 
     fn create(_ctx: &Context<Self>) -> Self {
         Self {
-            player1: None,
-            player2: Some("Computer".to_string()), //just done to add name on the scoreboard
+            player1: "".to_string(),
+            player2: "Computer".to_string(), //just done to add name on the scoreboard
             difficulty: 1,
         }
     }
@@ -39,8 +39,8 @@ impl Component for Connect4AI {
             Msg::Connect4 => {
                 // handle starting the game here
             }
-            Msg::SetPlayer1Name(name) => {
-                self.player1 = name;
+            Msg::SetPlayer1Name(e) => {
+                self.player1 += &*e;
             }
             Msg::SetDifficulty(difficulty) => {
                 self.difficulty = difficulty;
@@ -57,7 +57,7 @@ impl Component for Connect4AI {
                     <hr style="width:50px;border:5px solid red" class="w3-round"/>
                 </div>
                 <div class="col-md-offset-3 col-md-8">
-                    <input id="textbox1" type="text" placeholder="Your Name" oninput={ctx.link().callback(|e: InputEvent| Msg::SetPlayer1Name(e.data()))}/>
+                    <input id="textbox1" type="text" placeholder="Your Name" oninput={ctx.link().callback(|e: InputEvent| Msg::SetPlayer1Name(e))}/>
 
                     /*
                     <label for="difficulty_drop_down"> {"Difficulty:"} </label>

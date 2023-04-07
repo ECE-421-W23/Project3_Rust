@@ -4,8 +4,11 @@ use yew::html::Scope;
 
 mod Home;
 mod HowToConnect4;
+mod Connect4Computer;
+mod Connect4Human;
 mod HowToToot;
 mod TootOttoHuman;
+
 
 #[derive(Routable, Debug, Clone, PartialEq)]
 pub enum Route {
