@@ -56,13 +56,19 @@ impl TootOttoHuman{
         let canvas: HtmlCanvasElement = self.canvas.cast().unwrap();
         let context: CanvasRenderingContext2d = canvas.get_context("2d").unwrap().unwrap().unchecked_into();
         context.save();
-        context.set_fill_style(&JsValue::from("#99ffcc"));
-        context.set_font("bold 25px serif");
         let board = self.game.borrow_mut().get_grid();
         for (row, row_elems) in board.iter().enumerate(){
             for(col, elem) in row_elems.iter().enumerate(){
                 if let Some(piece) = elem {
-                    context.set_fill_style(&JsValue::from("#99ffcc"));
+                    match piece {
+                        Piece::T => {
+                            context.set_fill_style(&JsValue::from("#99ffcc"));
+                        },
+                        Piece::O => {
+                            context.set_fill_style(&JsValue::from("#ffff99"));
+                        },
+                        _ => {},
+                    }
                     context.begin_path();
                     context.arc(
                         (75 * col + 100) as f64,
