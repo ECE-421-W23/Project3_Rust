@@ -1,20 +1,19 @@
-use std::arch::x86_64::CpuidResult;
 use serde::{Deserialize, Serialize};
+use crate::Connect4::Piece::R;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Connect4 {
     board: [[Option<Piece>; 7]; 6],
     current_player: Player,
-    against_ai: bool,
 }
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub enum Piece {
     R,
     Y,
 }
 
-#[derive(PartialEq, Clone)]
+#[derive(PartialEq, Clone, Debug, Copy)]
 pub enum Player {
     Red,
     Yellow,
@@ -30,31 +29,36 @@ impl From<Piece> for Player {
 }
 
 impl Connect4 {
-    pub fn new(against_ai: bool) -> Connect4 {
+    pub fn new() -> Connect4 {
         Connect4 {
             board: [[None; 7]; 6],
             current_player: Player::Red,
-            against_ai,
         }
     }
     fn check_bounds(&self, col: usize) -> bool {
         col < 7
     }
-    fn get_current_player(&self) -> Player {
-        self.current_player.clone()
-    }
-    fn get_grid(&self) -> [[Option<Piece>; 7]; 6] {
-        self.board.clone()
+
+    pub fn user_move(&mut self, column: usize) -> bool {
+        let mut done = false;
+        let piece = match self.current_player {
+            Player::Yellow => Piece::Y,
+            Player::Red => Piece::R,
+        };
+        if !self.check_bounds(column) {
+            return false;
+        }
+        if self.place_piece(column, piece).is_some() {
+            done = true;
+            self.current_player = match self.current_player {
+                Player::Red => Player::Yellow,
+                Player::Yellow => Player::Red,
+            };
+        }
+        done
     }
 
-    pub fn red_move(&mut self, column: usize, piece: Piece) {
-        if self.current_player != Player::Red {
-            return;
-        }
-        // check if the given column is valid
-        if column >= 7 {
-            return;
-        }
+    fn place_piece(&mut self, column: usize, piece: Piece) -> Option<usize>{
         // get the lowest available row in the selected column
         let mut row = None;
         for i in (0..6).rev() {
@@ -63,49 +67,148 @@ impl Connect4 {
                 break;
             }
         }
-        // if the column is full, return an error
+        // if the column is full, return None
         if row.is_none() {
-            return;
+            return None;
         }
         // place the Red piece at the selected position
         self.board[row.unwrap()][column] = Some(piece);
-        // switch to the next player (Yellow)
-        self.current_player = Player::Yellow;
+        //return row where the data was added
+        row
     }
 
-    pub fn yellow_move(&mut self, column: usize, piece: Piece) {
-        if self.current_player != Player::Yellow {
-            return;
-        }
-        if column >= 7 {
-            return;
-        }
-        // get the lowest available row in the selected column
-        let mut row = None;
-        for i in (0..6).rev() {
-            if self.board[i][column].is_none() {
-                row = Some(i);
-                break;
+    fn remove_piece(&mut self, row: usize, col: usize) {
+        self.board[row][col] = None;
+    }
+
+    pub fn ai_move(&mut self, depth: usize) -> bool{
+        let mut done = false;
+        let (column, score) = self.minimax(depth as i32, true);
+        if column < 7 {
+            let piece = if self.current_player == Player::Red { Piece::R } else { Piece::Y };
+            if self.place_piece(column, piece).is_some() {
+                done = true;
+                self.current_player = match self.current_player {
+                    Player::Red => Player::Yellow,
+                    Player::Yellow => Player::Red,
+                };
             }
         }
-        // if the column is full, return an error
-        if row.is_none() {
-            return;
-        }
-        // place the Yellow piece at the selected position
-        self.board[row.unwrap()][column] = Some(piece);
-        // switch to the next player (Red)
-        self.current_player = Player::Red;
+        done
     }
 
-    //ai is always yellow (no option provided in the current implementation)
-    pub fn ai_move(&mut self) {
-        let mut piece = Piece::Y;
-        let mut column_to_choose = 0;
-        if self.against_ai {
-            column_to_choose = self.choose();
+    fn minimax(&mut self, depth: i32, maximizing_player: bool) -> (usize, i32) {
+        if depth == 0 || self.is_draw() || self.is_over() {
+            return (0, self.evaluate_board(maximizing_player));
         }
-       self.yellow_move(column_to_choose, piece);
+
+        let mut best_score = if maximizing_player {i32::MIN} else {i32::MAX};
+        let mut best_col = 0;
+        for column in 0..7 {
+            if self.board[0][column].is_some() {
+                continue;
+            }
+            let piece = if self.current_player == Player::Red { Piece::R } else { Piece::Y };
+            let row = self.place_piece(column, piece);
+            if row.is_some() {
+                let (_, score) = self.minimax(depth - 1, !maximizing_player);
+                self.remove_piece(row.unwrap(), column);
+                // Update the best move and score if we found a better one
+                if maximizing_player && score > best_score {
+                    best_score = score;
+                    best_col = column;
+                } else if !maximizing_player && score < best_score {
+                    best_score = score;
+                    best_col = column;
+                }
+            }
+        }
+        (best_col, best_score)
+    }
+
+    fn evaluate_board(&self, maximizing_player: bool) -> i32 {
+        let mut score = 0;
+        // Evaluate horizontal lines
+        for row in 0..6 {
+            for col in 0..4 {
+                if let Some(piece) = self.board[row][col] {
+                    let mut length = 1;
+                    for i in 1..4 {
+                        if self.board[row][col + i] == Some(piece) {
+                            length += 1;
+                        } else {
+                            break;
+                        }
+                    }
+                    score += self.get_score(length, maximizing_player);
+                }
+            }
+        }
+
+        // Evaluate vertical lines
+        for row in 0..3 {
+            for col in 0..7 {
+                if let Some(piece) = self.board[row][col] {
+                    let mut length = 1;
+                    for i in 1..4 {
+                        if self.board[row + i][col] == Some(piece) {
+                            length += 1;
+                        } else {
+                            break;
+                        }
+                    }
+                    score += self.get_score(length, maximizing_player);
+                }
+            }
+        }
+
+        // Evaluate diagonal lines
+        for row in 0..3 {
+            for col in 0..4 {
+                if let Some(piece) = self.board[row][col] {
+                    let mut length = 1;
+                    for i in 1..4 {
+                        if self.board[row + i][col + i] == Some(piece) {
+                            length += 1;
+                        } else {
+                            break;
+                        }
+                    }
+                    score += self.get_score(length, maximizing_player);
+                }
+                if let Some(piece) = self.board[row][col + 3] {
+                    let mut length = 1;
+                    for i in 1..4 {
+                        if self.board[row + i][col + 3 - i] == Some(piece) {
+                            length += 1;
+                        } else {
+                            break;
+                        }
+                    }
+                    score += self.get_score(length, maximizing_player);
+                }
+            }
+        }
+        score
+    }
+
+    fn get_score(&self, length: i32, maximizing_player: bool) -> i32 {
+        let mut score = 0;
+        //ai will prioritize blocking as much as possible
+        if maximizing_player {
+            score += match length {
+                2 => 10,
+                3 => 100,
+                _ => 0,
+            };
+        } else {
+            score += match length {
+                2 => -10,
+                3 => -100,
+                _ => 0,
+            };
+        }
+        score
     }
 
     pub fn winner(&self) -> Option<Player> {
@@ -161,99 +264,6 @@ impl Connect4 {
         None
     }
 
-    pub fn is_draw(&self) -> bool{
-        if self.board.iter().all(|row| row.iter().all(|cell| cell.is_some())) {
-            return true;
-        }
-        return false;
-    }
-    fn choose(&self) -> usize {
-        let mut best_score = i32::MIN;
-        let mut best_column = 0;
-
-        for column in 0..7 {
-            let mut cloned_board = self.clone();
-            cloned_board.red_move(column, Piece::R);
-
-            let score = cloned_board.get_score(Player::Yellow);
-
-            if score > best_score {
-                best_score = score;
-                best_column = column;
-            }
-        }
-        best_column
-    }
-
-    fn get_score(&self, player: Player) -> i32 {
-        let pieces = match player {
-            Player::Red => Piece::R,
-            Player::Yellow => Piece::Y,
-        };
-        let mut score = 0;
-        // check horizontal
-        for row in 0..6 {
-            for col in 0..4 {
-                let mut found = true;
-                for i in 0..4 {
-                    if self.board[row][col+i] != Some(pieces) {
-                        found = false;
-                        break;
-                    }
-                }
-                if found {
-                    score += 1;
-                }
-            }
-        }
-        // check vertical
-        for row in 0..3 {
-            for col in 0..7 {
-                let mut found = true;
-                for i in 0..4 {
-                    if self.board[row+i][col] != Some(pieces) {
-                        found = false;
-                        break;
-                    }
-                }
-                if found {
-                    score += 1;
-                }
-            }
-        }
-        // check diagonal \
-        for row in 0..3 {
-            for col in 0..4 {
-                let mut found = true;
-                for i in 0..4 {
-                    if self.board[row+i][col+i] != Some(pieces) {
-                        found = false;
-                        break;
-                    }
-                }
-                if found {
-                    score += 1;
-                }
-            }
-        }
-        // check diagonal /
-        for row in 0..3 {
-            for col in 3..7 {
-                let mut found = true;
-                for i in 0..4 {
-                    if self.board[row+i][col-i] != Some(pieces) {
-                        found = false;
-                        break;
-                    }
-                }
-                if found {
-                    score += 1;
-                }
-            }
-        }
-        score
-    }
-
     fn check_win(line: &[Option<Piece>; 4]) -> bool {
         let mut red_found = false;
         let mut yellow_found = false;
@@ -270,6 +280,24 @@ impl Connect4 {
         red_found || yellow_found
     }
 
+    pub fn is_draw(&self) -> bool{
+        if self.board.iter().all(|row| row.iter().all(|cell| cell.is_some())) {
+            return true;
+        }
+        return false;
+    }
+
+    fn is_over(&self) -> bool{
+        return match self.winner() {
+            None => {
+                false
+            }
+            Some(_) => {
+                true
+            }
+        }
+    }
+
     // Print the current state of the game board
     pub fn print_board(&self) {
         for row in &self.board {
@@ -284,4 +312,3 @@ impl Connect4 {
         }
     }
 }
-
