@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+
 use crate::Connect4::Piece::R;
 
 #[derive(Clone, Debug)]
@@ -35,6 +36,21 @@ impl Connect4 {
             current_player: Player::Red,
         }
     }
+
+    pub fn get_grid(&self) -> [[Option<Piece>; 7]; 6] {
+        self.board.clone()
+    }
+
+    pub fn top_row(&self, col: usize) -> usize {
+        for row in (0..6).rev() {
+            if self.board[row][col].is_none() {
+                return row;
+            }
+        }
+        //if row is empty return anything greater than 6
+        10
+    }
+
     fn check_bounds(&self, col: usize) -> bool {
         col < 7
     }
@@ -58,7 +74,7 @@ impl Connect4 {
         done
     }
 
-    fn place_piece(&mut self, column: usize, piece: Piece) -> Option<usize>{
+    fn place_piece(&mut self, column: usize, piece: Piece) -> Option<usize> {
         // get the lowest available row in the selected column
         let mut row = None;
         for i in (0..6).rev() {
@@ -81,7 +97,7 @@ impl Connect4 {
         self.board[row][col] = None;
     }
 
-    pub fn ai_move(&mut self, depth: usize) -> bool{
+    pub fn ai_move(&mut self, depth: usize) -> bool {
         let mut done = false;
         let (column, score) = self.minimax(depth as i32, true);
         if column < 7 {
@@ -102,7 +118,7 @@ impl Connect4 {
             return (0, self.evaluate_board(maximizing_player));
         }
 
-        let mut best_score = if maximizing_player {i32::MIN} else {i32::MAX};
+        let mut best_score = if maximizing_player { i32::MIN } else { i32::MAX };
         let mut best_col = 0;
         for column in 0..7 {
             if self.board[0][column].is_some() {
@@ -222,25 +238,25 @@ impl Connect4 {
                 for k in 0..4 {
                     // from (i, j) to the right
                     if j + k < 7 {
-                        left_to_right[k] = self.board[i][j+k];
+                        left_to_right[k] = self.board[i][j + k];
                     } else {
                         left_to_right[k] = None;
                     }
                     // from (i, j) to the bottom
                     if i + k < 6 {
-                        top_to_bottom[k] = self.board[i+k][j];
+                        top_to_bottom[k] = self.board[i + k][j];
                     } else {
                         top_to_bottom[k] = None;
                     }
                     // from (i, j) to bottom right
-                    if i+k < 6 && j+k < 7 {
-                        backward_slash[k] = self.board[i+k][j+k];
+                    if i + k < 6 && j + k < 7 {
+                        backward_slash[k] = self.board[i + k][j + k];
                     } else {
                         backward_slash[k] = None;
                     }
                     // from (i, j) to top right
-                    if i as i32-k as i32 >= 0 && j+k < 7 {
-                        forward_slash[k] = self.board[i-k][j+k];
+                    if i as i32 - k as i32 >= 0 && j + k < 7 {
+                        forward_slash[k] = self.board[i - k][j + k];
                     } else {
                         forward_slash[k] = None;
                     }
@@ -268,11 +284,11 @@ impl Connect4 {
         let mut red_found = false;
         let mut yellow_found = false;
 
-        for i in 0..line.len()-3 {
-            if line[i] == Some(Piece::R) && line[i+1] == Some(Piece::R) && line[i+2] == Some(Piece::R) && line[i+3] == Some(Piece::R) {
+        for i in 0..line.len() - 3 {
+            if line[i] == Some(Piece::R) && line[i + 1] == Some(Piece::R) && line[i + 2] == Some(Piece::R) && line[i + 3] == Some(Piece::R) {
                 red_found = true;
             }
-            if line[i] == Some(Piece::Y) && line[i+1] == Some(Piece::Y) && line[i+2] == Some(Piece::Y) && line[i+3] == Some(Piece::Y) {
+            if line[i] == Some(Piece::Y) && line[i + 1] == Some(Piece::Y) && line[i + 2] == Some(Piece::Y) && line[i + 3] == Some(Piece::Y) {
                 yellow_found = true;
             }
         }
@@ -280,14 +296,14 @@ impl Connect4 {
         red_found || yellow_found
     }
 
-    pub fn is_draw(&self) -> bool{
+    pub fn is_draw(&self) -> bool {
         if self.board.iter().all(|row| row.iter().all(|cell| cell.is_some())) {
             return true;
         }
         return false;
     }
 
-    fn is_over(&self) -> bool{
+    fn is_over(&self) -> bool {
         return match self.winner() {
             None => {
                 false
@@ -295,7 +311,7 @@ impl Connect4 {
             Some(_) => {
                 true
             }
-        }
+        };
     }
 
     // Print the current state of the game board
