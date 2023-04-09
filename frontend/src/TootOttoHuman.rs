@@ -1,21 +1,21 @@
 #![allow(non_snake_case)]
 
-use yew::prelude::*;
-use common::TootOtto::{Piece, Player, TootOtto};
 use std::cell::RefCell;
 use std::f64::consts::PI;
 use std::rc::Rc;
+
+use common::TootOtto::{Piece, Player, TootOtto};
 use stdweb::traits::*;
 use stdweb::unstable::TryInto;
 use stdweb::web::document;
-use stdweb::web::event::{ClickEvent, ResizeEvent, MouseDownEvent};
+use stdweb::web::event::{ClickEvent, MouseDownEvent, ResizeEvent};
 use stdweb::web::html_element::{CanvasElement, SelectElement};
-// use stdweb::web::{FillRule, window, CanvasRenderingContext2d};
-use web_sys::{window, RequestInit};
-use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, Request, Response, MouseEvent, HtmlInputElement};
-use wasm_bindgen::{prelude::Closure, JsCast, JsValue};
+use wasm_bindgen::{JsCast, JsValue, prelude::Closure};
 use wasm_bindgen_futures::JsFuture;
-
+// use stdweb::web::{FillRule, window, CanvasRenderingContext2d};
+use web_sys::{RequestInit, window};
+use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, HtmlInputElement, MouseEvent, Request, Response};
+use yew::prelude::*;
 
 pub struct TootOttoHuman {
     // add any state necessary for the game
@@ -48,26 +48,26 @@ pub enum Msg {
     EndGame,
     SetDisc(String),
     ClickedColumn(Option<usize>),
-    Record()
+    Record(),
 }
 
-impl TootOttoHuman{
-    fn render_board(&mut self){
+impl TootOttoHuman {
+    fn render_board(&mut self) {
         let canvas: HtmlCanvasElement = self.canvas.cast().unwrap();
         let context: CanvasRenderingContext2d = canvas.get_context("2d").unwrap().unwrap().unchecked_into();
         context.save();
         let board = self.game.borrow_mut().get_grid();
-        for (row, row_elems) in board.iter().enumerate(){
-            for(col, elem) in row_elems.iter().enumerate(){
+        for (row, row_elems) in board.iter().enumerate() {
+            for (col, elem) in row_elems.iter().enumerate() {
                 if let Some(piece) = elem {
                     match piece {
                         Piece::T => {
                             context.set_fill_style(&JsValue::from("#99ffcc"));
-                        },
+                        }
                         Piece::O => {
                             context.set_fill_style(&JsValue::from("#ffff99"));
-                        },
-                        _ => {},
+                        }
+                        _ => {}
                     }
                     context.begin_path();
                     context.arc(
@@ -92,14 +92,14 @@ impl TootOttoHuman{
         context.restore();
     }
 
-    fn render_background(&mut self){
+    fn render_background(&mut self) {
         let canvas: HtmlCanvasElement = self.canvas.cast().unwrap();
         let context: CanvasRenderingContext2d = canvas.get_context("2d").unwrap().unwrap().unchecked_into();
         context.save();
         context.set_fill_style(&JsValue::from("#00bfff"));
         context.begin_path();
         for y in 0..6 {
-            for x in 0..7{
+            for x in 0..7 {
                 let err = context.arc(
                     (75 * x + 100) as f64,
                     (75 * y + 50) as f64,
@@ -114,7 +114,7 @@ impl TootOttoHuman{
         context.restore();
     }
 
-    fn check_winner(&mut self){
+    fn check_winner(&mut self) {
         // TO-DO Add implementation to check for a draw
         match self.game.borrow_mut().winner() {
             None => {}
@@ -149,10 +149,9 @@ impl TootOttoHuman{
             context.fill_text(message, (150) as f64, (20) as f64);
             context.restore();
         }
-
     }
 
-    fn make_move(&mut self, col: usize){
+    fn make_move(&mut self, col: usize) {
         if self.selected_letter == 'T' {
             match self.current_player {
                 Player::Toot => {
@@ -180,8 +179,8 @@ impl TootOttoHuman{
         }
     }
 
-    fn new_game(&mut self){
-        self.game =  Rc::new(RefCell::new(TootOtto::new()));
+    fn new_game(&mut self) {
+        self.game = Rc::new(RefCell::new(TootOtto::new()));
         self.winner = "".to_string();
         self.is_game_over = false;
         self.is_game_draw = false;
@@ -306,8 +305,6 @@ impl Component for TootOttoHuman {
     }
 
     fn view(&self, _ctx: &Context<Self>) -> Html {
-
-
         html! {
             <>
         // add the HTML necessary for the game
@@ -363,7 +360,6 @@ impl Component for TootOttoHuman {
             </>
         }
     }
-
 }
 
 macro_rules! enclose {

@@ -1,6 +1,6 @@
+use yew::html::Scope;
 use yew::prelude::*;
 use yew_router::prelude::*;
-use yew::html::Scope;
 
 mod Home;
 mod HowToConnect4;

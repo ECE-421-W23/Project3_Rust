@@ -1,5 +1,5 @@
-use std::borrow::BorrowMut;
 use std::cmp::{max, min};
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone)]
@@ -38,7 +38,7 @@ impl TootOtto {
         }
     }
 
-    pub fn get_current_player(&self) -> Player{
+    pub fn get_current_player(&self) -> Player {
         self.current_player.clone()
     }
 
@@ -78,7 +78,7 @@ impl TootOtto {
         self.place_piece(column, piece);
     }
 
-    fn place_piece(&mut self, column:usize, piece: Piece){
+    fn place_piece(&mut self, column: usize, piece: Piece) {
         let mut row = None;
         for i in (0..6).rev() {
             if self.board[i][column].is_none() {
@@ -107,20 +107,20 @@ impl TootOtto {
             Player::Toot => {
                 maximizing_player = false;
                 next_Toot = true;
-            },
-            _ => {},
+            }
+            _ => {}
         };
 
         self.current_player = Player::AI;
         // let mut current_state = self.board.clone();
         // let mut best_score = i32::MIN;
         let (column, score, piece) = self.minimax(depth as i32, maximizing_player);
-        if column != 10{
+        if column != 10 {
             self.place_piece(column, piece);
         }
 
         // switch to the next player
-        if next_Toot == true{
+        if next_Toot == true {
             self.current_player = Player::Toot;
         } else {
             self.current_player = Player::Otto;
@@ -136,11 +136,11 @@ impl TootOtto {
             best_score = 10000000;
         }
 
-        if depth == 0 || self.is_draw()  || self.is_over() {
+        if depth == 0 || self.is_draw() || self.is_over() {
             // self.print_board();
             // println!();
             // println!("{}", self.evaluate_board(maximizing_player));
-            return (0, self.evaluate_board( maximizing_player), best_piece);
+            return (0, self.evaluate_board(maximizing_player), best_piece);
         }
 
         let pieces = [Piece::T, Piece::O];
@@ -187,8 +187,6 @@ impl TootOtto {
             // println!("{:?}", best_piece);
             (best_col, best_score, best_piece)
         }
-
-
     }
 
     pub fn evaluate_board(&self, maximizing: bool) -> i32 {
@@ -242,53 +240,53 @@ impl TootOtto {
         let mut score = 0;
         // TOOT scores are positive, OTTO scores are negative
         // 10 for OO, -10 for TT
-        for i in 0..line.len()-3 {
+        for i in 0..line.len() - 3 {
             if maximizing == true {
                 // prioritize blocking win of OTTO over 2nd last win move
-                if line[i] == Some(Piece::T) && line[i+1] == Some(Piece::O) && line[i+2] == Some(Piece::O) && line[i+3] == Some(Piece::T) {
-                    return 1100
+                if line[i] == Some(Piece::T) && line[i + 1] == Some(Piece::O) && line[i + 2] == Some(Piece::O) && line[i + 3] == Some(Piece::T) {
+                    return 1100;
                 }
-                if line[i] == Some(Piece::O) && line[i+1] == Some(Piece::T) && line[i+2] == Some(Piece::T) && line[i+3] == Some(Piece::O) {
-                    return -1000
+                if line[i] == Some(Piece::O) && line[i + 1] == Some(Piece::T) && line[i + 2] == Some(Piece::T) && line[i + 3] == Some(Piece::O) {
+                    return -1000;
                 }
-                if line[i] == Some(Piece::T) && line[i+1] == Some(Piece::O) && line[i+2] == Some(Piece::O) && line[i+3] == None{
-                    return 100
+                if line[i] == Some(Piece::T) && line[i + 1] == Some(Piece::O) && line[i + 2] == Some(Piece::O) && line[i + 3] == None {
+                    return 100;
                 }
-                if line[i] == Some(Piece::O) && line[i+1] == Some(Piece::T) && line[i+2] == Some(Piece::T) && line[i+3] == None{
-                    return -110
+                if line[i] == Some(Piece::O) && line[i + 1] == Some(Piece::T) && line[i + 2] == Some(Piece::T) && line[i + 3] == None {
+                    return -110;
                 }
-                if line[i] == None && line[i+1] == Some(Piece::O) && line[i+2] == Some(Piece::O) && line[i+3] == Some(Piece::T) {
-                    return 100
+                if line[i] == None && line[i + 1] == Some(Piece::O) && line[i + 2] == Some(Piece::O) && line[i + 3] == Some(Piece::T) {
+                    return 100;
                 }
-                if line[i] == None && line[i+1] == Some(Piece::T) && line[i+2] == Some(Piece::T) && line[i+3] == Some(Piece::O) {
-                    return -110
+                if line[i] == None && line[i + 1] == Some(Piece::T) && line[i + 2] == Some(Piece::T) && line[i + 3] == Some(Piece::O) {
+                    return -110;
                 }
             } else {
                 // prioritize blocking win of TOOT over 2nd last win move
-                if line[i] == Some(Piece::T) && line[i+1] == Some(Piece::O) && line[i+2] == Some(Piece::O) && line[i+3] == Some(Piece::T) {
-                    return 1000
+                if line[i] == Some(Piece::T) && line[i + 1] == Some(Piece::O) && line[i + 2] == Some(Piece::O) && line[i + 3] == Some(Piece::T) {
+                    return 1000;
                 }
-                if line[i] == Some(Piece::O) && line[i+1] == Some(Piece::T) && line[i+2] == Some(Piece::T) && line[i+3] == Some(Piece::O) {
-                    return -1100
+                if line[i] == Some(Piece::O) && line[i + 1] == Some(Piece::T) && line[i + 2] == Some(Piece::T) && line[i + 3] == Some(Piece::O) {
+                    return -1100;
                 }
-                if line[i] == Some(Piece::T) && line[i+1] == Some(Piece::O) && line[i+2] == Some(Piece::O) && line[i+3] == None{
-                    return 110
+                if line[i] == Some(Piece::T) && line[i + 1] == Some(Piece::O) && line[i + 2] == Some(Piece::O) && line[i + 3] == None {
+                    return 110;
                 }
-                if line[i] == Some(Piece::O) && line[i+1] == Some(Piece::T) && line[i+2] == Some(Piece::T) && line[i+3] == None{
-                    return -100
+                if line[i] == Some(Piece::O) && line[i + 1] == Some(Piece::T) && line[i + 2] == Some(Piece::T) && line[i + 3] == None {
+                    return -100;
                 }
-                if line[i] == None && line[i+1] == Some(Piece::O) && line[i+2] == Some(Piece::O) && line[i+3] == Some(Piece::T) {
-                    return 110
+                if line[i] == None && line[i + 1] == Some(Piece::O) && line[i + 2] == Some(Piece::O) && line[i + 3] == Some(Piece::T) {
+                    return 110;
                 }
-                if line[i] == None && line[i+1] == Some(Piece::T) && line[i+2] == Some(Piece::T) && line[i+3] == Some(Piece::O) {
-                    return -100
+                if line[i] == None && line[i + 1] == Some(Piece::T) && line[i + 2] == Some(Piece::T) && line[i + 3] == Some(Piece::O) {
+                    return -100;
                 }
             }
-            if line[i] == None && line[i+1] == Some(Piece::T) && line[i+2] == Some(Piece::T) && line[i+3] == None {
-                return -10
+            if line[i] == None && line[i + 1] == Some(Piece::T) && line[i + 2] == Some(Piece::T) && line[i + 3] == None {
+                return -10;
             }
-            if line[i] == None && line[i+1] == Some(Piece::O) && line[i+2] == Some(Piece::O) && line[i+3] == None {
-                return 10
+            if line[i] == None && line[i + 1] == Some(Piece::O) && line[i + 2] == Some(Piece::O) && line[i + 3] == None {
+                return 10;
             }
         }
         score
@@ -366,14 +364,14 @@ impl TootOtto {
         None
     }
 
-    pub fn is_draw(&self) -> bool{
+    pub fn is_draw(&self) -> bool {
         if self.board.iter().all(|row| row.iter().all(|cell| cell.is_some())) {
             return true;
         }
         return false;
     }
 
-    pub fn is_over(&self) -> bool{
+    pub fn is_over(&self) -> bool {
         return match self.winner() {
             None => {
                 false
@@ -381,18 +379,18 @@ impl TootOtto {
             Some(_) => {
                 true
             }
-        }
+        };
     }
 
     fn check_win(line: &[Option<Piece>; 4]) -> bool {
         let mut toot_found = false;
         let mut otto_found = false;
 
-        for i in 0..line.len()-3 {
-            if line[i] == Some(Piece::T) && line[i+1] == Some(Piece::O) && line[i+2] == Some(Piece::O) && line[i+3] == Some(Piece::T) {
+        for i in 0..line.len() - 3 {
+            if line[i] == Some(Piece::T) && line[i + 1] == Some(Piece::O) && line[i + 2] == Some(Piece::O) && line[i + 3] == Some(Piece::T) {
                 toot_found = true;
             }
-            if line[i] == Some(Piece::O) && line[i+1] == Some(Piece::T) && line[i+2] == Some(Piece::T) && line[i+3] == Some(Piece::O) {
+            if line[i] == Some(Piece::O) && line[i + 1] == Some(Piece::T) && line[i + 2] == Some(Piece::T) && line[i + 3] == Some(Piece::O) {
                 otto_found = true;
             }
         }
