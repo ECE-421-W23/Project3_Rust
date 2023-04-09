@@ -8,7 +8,7 @@ pub struct TootOtto {
     current_player: Player,
 }
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub enum Piece {
     T,
     O,
@@ -114,8 +114,8 @@ impl TootOtto {
         self.current_player = Player::AI;
         // let mut current_state = self.board.clone();
         // let mut best_score = i32::MIN;
-        let (column, score, piece) = self.minimax(depth as i32, i32::MIN, i32::MAX, maximizing_player);
-        if score != 0 && column != 10{
+        let (column, score, piece) = self.minimax(depth as i32, maximizing_player);
+        if column != 10{
             self.place_piece(column, piece);
         }
 
@@ -127,146 +127,68 @@ impl TootOtto {
         }
     }
 
-    pub fn minimax(&mut self, depth: i32, mut alpha: i32, mut beta: i32, maximizing_player: bool) -> (usize, i32, Piece) {
-        let (mut best_col, mut best_score, mut best_piece) = (0, i32::MIN, Piece::T);
+    pub fn minimax(&mut self, depth: i32, maximizing_player: bool) -> (usize, i32, Piece) {
+        let (mut best_col, mut best_piece) = (0, Piece::T);
+        let mut best_score = 0;
+        if maximizing_player {
+            best_score = -10000000;
+        } else {
+            best_score = 10000000;
+        }
 
         if depth == 0 || self.is_draw()  || self.is_over() {
+            // self.print_board();
+            // println!();
+            // println!("{}", self.evaluate_board(maximizing_player));
             return (0, self.evaluate_board( maximizing_player), best_piece);
         }
 
-        if maximizing_player {
-        // favour TOOT
-            let piece = Piece::T;
-            for j in 0..7 {
-                if self.board[0][j].is_some() {
-                    continue;
-                }
-                let mut game_copy = self.clone();
-                game_copy.place_piece(j, piece);
-                let temp_val = game_copy.minimax(depth - 1, alpha, beta, !maximizing_player);
-                if temp_val.1 > best_score {
-                    best_score = temp_val.1;
-                    best_col = j as usize;
-                    best_piece = piece;
-                }
-                alpha = alpha.max(best_score);
-                if alpha >= beta {
-                    break;
-                }
-            }
-            let piece = Piece::O;
-            for j in 0..7{
-                if self.board[0][j].is_some() {
-                    continue;
-                }
-                let mut game_copy = self.clone();
-                game_copy.place_piece(j, piece);
-                let temp_val = game_copy.minimax(depth - 1, alpha, beta, !maximizing_player);
-                if temp_val.1 > best_score {
-                    best_score = temp_val.1;
-                    best_col = j as usize;
-                    best_piece = piece;
-                }
-                alpha = alpha.max(best_score);
-                if alpha >= beta {
-                    break;
+        let pieces = [Piece::T, Piece::O];
+        for piece in pieces.iter() {
+            for col in 0..7 {
+                if let Some(row) = self.get_valid_row(col) {
+                    self.board[row][col] = Some(*piece);
+
+                    let score = self.minimax(depth - 1, !maximizing_player).1;
+                    // println!();
+                    // println!("{}", score);
+                    // println!();
+
+                    if maximizing_player == true {
+                        if score > best_score {
+                            best_score = score;
+                            best_col = col;
+                            best_piece = *piece;
+                        }
+                    } else {
+                        // println!("Maximizing player = false");
+                        // println!();
+                        // println!("{}", score);
+                        // println!();
+                        if score < best_score {
+                            best_score = score;
+                            best_col = col;
+                            best_piece = *piece;
+                            // println!();
+                            // println!("{}", best_score);
+                            // println!();
+                        }
+                    }
+
+                    self.board[row][col] = None;
                 }
             }
-            return(best_col, best_score, best_piece);
-        } else {
-        // favour OTTO
-            let piece = Piece::T;
-            for j in 0..7 {
-                if self.board[0][j].is_some() {
-                    continue;
-                }
-                let mut game_copy = self.clone();
-                game_copy.place_piece(j, piece);
-                let temp_val = game_copy.minimax(depth - 1, alpha, beta, !maximizing_player);
-                if temp_val.1 < best_score {
-                    best_score = temp_val.1;
-                    best_col = j as usize;
-                    best_piece = piece;
-                }
-                beta = beta.min(best_score);
-                if alpha >= beta {
-                    break;
-                }
-            }
-            let piece = Piece::O;
-            for j in 0..7{
-                if self.board[0][j].is_some() {
-                    continue;
-                }
-                let mut game_copy = self.clone();
-                game_copy.place_piece(j, piece);
-                let temp_val = game_copy.minimax(depth - 1, alpha, beta, !maximizing_player);
-                if temp_val.1 < best_score {
-                    best_score = temp_val.1;
-                    best_col = j as usize;
-                    best_piece = piece;
-                }
-                beta = beta.min(best_score);
-                if alpha >= beta {
-                    break;
-                }
-            }
-            return(best_col, best_score, best_piece);
         }
 
-        (best_col, best_score, best_piece)
-        // let mut new_board = self.clone();
-        // let pieces = [Piece::T, Piece::O];
-        // let mut max_eval = i32::MIN;
-        // let mut min_eval = i32::MAX;
-        // let mut is_break = false;
-        // for piece in pieces.iter() {
-        //     for col in 0..7 {
-        //         if is_break {
-        //             break;
-        //         }
-        //         if let Some(row) = self.get_valid_row(col) {
-        //             self.board[row][col] = Some(*piece);
-        //
-        //             let score = self.minimax(depth - 1, alpha, beta, !maximizing_player).1;
-        //
-        //             if maximizing_player {
-        //                 if score > max_eval{
-        //                     max_eval = score;
-        //                     best_score = score;
-        //                     best_col = Some(col);
-        //                     best_piece = *piece;
-        //                 }
-        //                 alpha = alpha.max(score);
-        //                 if beta <= alpha {
-        //                     is_break = true;
-        //                     self.board[row][col] = None;
-        //                     break;
-        //                 }
-        //             } else {
-        //                 if score < min_eval{
-        //                     min_eval = score;
-        //                     best_score = score;
-        //                     best_col = Some(col);
-        //                     best_piece = *piece;
-        //                 }
-        //                 beta = beta.min(score);
-        //                 if beta <= alpha {
-        //                     is_break = true;
-        //                     self.board[row][col] = None;
-        //                     break;
-        //                 }
-        //             }
-        //             self.board[row][col] = None;
-        //         }
-        //     }
-        // }
-        //
-        // if best_col.is_none() {
-        //     (10, best_score, best_piece)
-        // } else {
-        //     (best_col.unwrap(), best_score, best_piece)
-        // }
+        if best_col == 10 {
+            (10, best_score, best_piece)
+        } else {
+            // println!("{}", best_col);
+            // println!("{:?}", best_piece);
+            (best_col, best_score, best_piece)
+        }
+
+
     }
 
     pub fn evaluate_board(&self, maximizing: bool) -> i32 {
@@ -373,7 +295,7 @@ impl TootOtto {
     }
 
     fn get_valid_row(&self, col: usize) -> Option<usize> {
-        for row in 0..self.board.len() {
+        for row in (0..6).rev() {
             if self.board[row][col].is_none() {
                 return Some(row);
             }
