@@ -133,7 +133,7 @@ impl TootOttoHuman {
                 context.set_font("bold 25px serif");
                 context.set_fill_style(&JsValue::from("#111"));
                 context.begin_path();
-                context.fill_text(&message, (150) as f64, (20) as f64);
+                context.fill_text(&message, (50) as f64, (20) as f64);
                 context.restore();
             }
         };
@@ -146,7 +146,7 @@ impl TootOttoHuman {
             context.set_font("bold 25px serif");
             context.set_fill_style(&JsValue::from("#111"));
             context.begin_path();
-            context.fill_text(message, (150) as f64, (20) as f64);
+            context.fill_text(message, (50) as f64, (20) as f64);
             context.restore();
         }
     }
@@ -321,7 +321,7 @@ impl Component for TootOttoHuman {
                         <button
                             id="Start Button"
                             onclick={&self.start_event}
-                            disabled={false}
+                            disabled={self.p1_name == "".to_string() || self.p2_name == "".to_string()}
                             title="Start Game">
                             { "Start Game" }
                         </button>
