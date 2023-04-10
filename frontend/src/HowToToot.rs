@@ -6,7 +6,7 @@ use yew::prelude::*;
 pub fn HowToToot() -> Html {
     html! {
         <div style = "margin-top: 75px">
-        <div class="w3-container" id="services" style="margin-left:30%">
+        <div class="w3-container" id="services" style="margin-left:25%">
         <h5 class="w3-xxxlarge w3-text-red"><b>{"How to Play TOOT-OTTO"}</b></h5>
         <hr style="width:50px;border:5px solid red" class="w3-round"/>
         <p>{"TOOT-OTTO is a fun strategy game for older players who like tic-tac-toe and checkers. One player is TOOT and the other player is OTTO. Both players can place both T's and O's, based on their choice. The first player who spells his or her winning combination - horizontally, vertically or diagonally - wins!"}

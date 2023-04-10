@@ -297,12 +297,12 @@ impl Component for TootOttoComputer {
         {if !self.is_game_started {
             html! {
                 <div style = "margin-top: 75px">
-                <div class="w3-container" id="services" style="margin-left:30%">
+                <div class="w3-container" id="services" style="margin-left:25%">
                 <h5 class="w3-xxxlarge w3-text-red"><b>{"Enter Player Name"}</b></h5>
                 <hr style="width:50px;border:5px solid red" class="w3-round"/>
                     <div class="col-md-offset-3 col-md-8">
 
-                        <input id="P1 Name" type="text" placeholder="Player 1's Name" oninput = {&self.p1_name_event}/>
+                        <input id="P1 Name" type="text" style="margin-right: 5px" placeholder="Your Name" oninput = {&self.p1_name_event}/>
                         <button
                             id="Start Button"
                             onclick={&self.start_event}

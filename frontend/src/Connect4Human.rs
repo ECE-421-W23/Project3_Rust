@@ -1,16 +1,16 @@
+#![allow(non_snake_case)]
 use std::cell::RefCell;
 use std::f64::consts::PI;
 use std::rc::Rc;
 
 use common::Connect4::{Connect4, Piece, Player};
 use stdweb::traits::*;
-use stdweb::web::document;
 use stdweb::web::event::{ClickEvent, MouseDownEvent, ResizeEvent};
 use stdweb::web::html_element::{CanvasElement, SelectElement};
 use wasm_bindgen::{JsCast, JsValue, prelude::Closure};
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{RequestInit, window};
-use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, HtmlInputElement, MouseEvent, Request, Response};
+use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, HtmlInputElement, MouseEvent};
 use yew::prelude::*;
 
 pub struct Connect4Human {
@@ -234,15 +234,20 @@ impl Component for Connect4Human {
             <>
         {if !self.is_game_started {
             html! {
-                <div id="main"  style="margin-left:30%">
+                <div id="main"  style="margin-left:25%">
                 <div class="w3-container" id="services" style="margin-top:75px">
-                    <h5 class="w3-xxxlarge w3-text-red"><b>{"Enter Your Name"}</b></h5>
+                    <h5 class="w3-xxxlarge w3-text-red"><b>{"Enter Player Names"}</b></h5>
                     <hr style="width:50px;border:5px solid red" class="w3-round"/>
                 </div>
                 <div class="col-md-offset-3 col-md-8">
-                    <input id="textbox1" type="text" placeholder="Player1 Name" oninput={ctx.link().callback(|e: InputEvent| Msg::SetPlayer1Name(e))}/>
-                    <input id="textbox2" type="text" placeholder="Player2 Name" oninput={ctx.link().callback(|e: InputEvent| Msg::SetPlayer2Name(e))}/>
-                    <input id="startbutton" class="button" type="Submit" onclick={ctx.link().callback(|_| Msg::Connect4)} disabled = {self.player1 == "".to_string() || self.player2 == "".to_string()}/>
+                    <input id="textbox1" type="text" style="margin-right: 5px" placeholder="Player 1's Name" oninput={ctx.link().callback(|e: InputEvent| Msg::SetPlayer1Name(e))}/>
+                    <input id="textbox2" type="text" style="margin-right: 5px" placeholder="Player 2's Name" oninput={ctx.link().callback(|e: InputEvent| Msg::SetPlayer2Name(e))}/>
+                    <button id="startbutton"
+                        onclick={ctx.link().callback(|_| Msg::Connect4)}
+                        disabled = {self.player1 == "".to_string() || self.player2 == "".to_string()}
+                        title="Start Game">
+                            { "Start Game" }
+                        </button>
                     </div>
                 </div>
             }

@@ -99,7 +99,8 @@ impl Connect4 {
 
     pub fn ai_move(&mut self, depth: usize) -> bool {
         let mut done = false;
-        let (column, score) = self.minimax(depth as i32, true);
+        let mut new_depth = 5 - depth;
+        let (column, _score) = self.minimax(new_depth as i32, true);
         if column < 7 {
             let piece = if self.current_player == Player::Red { Piece::R } else { Piece::Y };
             if self.place_piece(column, piece).is_some() {
@@ -144,85 +145,86 @@ impl Connect4 {
 
     fn evaluate_board(&self, maximizing_player: bool) -> i32 {
         let mut score = 0;
-        // Evaluate horizontal lines
-        for row in 0..6 {
-            for col in 0..4 {
-                if let Some(piece) = self.board[row][col] {
-                    let mut length = 1;
-                    for i in 1..4 {
-                        if self.board[row][col + i] == Some(piece) {
-                            length += 1;
-                        } else {
-                            break;
-                        }
-                    }
-                    score += self.get_score(length, maximizing_player);
-                }
-            }
-        }
+        let mut left_to_right = [None; 4];
+        let mut top_to_bottom = [None; 4];
+        let mut backward_slash = [None; 4];
+        let mut forward_slash = [None; 4];
 
-        // Evaluate vertical lines
-        for row in 0..3 {
-            for col in 0..7 {
-                if let Some(piece) = self.board[row][col] {
-                    let mut length = 1;
-                    for i in 1..4 {
-                        if self.board[row + i][col] == Some(piece) {
-                            length += 1;
-                        } else {
-                            break;
-                        }
+        for i in 0..6 {
+            for j in 0..7 {
+                for k in 0..4 {
+                    // from (i, j) to the right
+                    if j + k < 7 {
+                        left_to_right[k] = self.board[i][j + k];
+                    } else {
+                        left_to_right[k] = None;
                     }
-                    score += self.get_score(length, maximizing_player);
-                }
-            }
-        }
-
-        // Evaluate diagonal lines
-        for row in 0..3 {
-            for col in 0..4 {
-                if let Some(piece) = self.board[row][col] {
-                    let mut length = 1;
-                    for i in 1..4 {
-                        if self.board[row + i][col + i] == Some(piece) {
-                            length += 1;
-                        } else {
-                            break;
-                        }
+                    // from (i, j) to the bottom
+                    if i + k < 6 {
+                        top_to_bottom[k] = self.board[i + k][j];
+                    } else {
+                        top_to_bottom[k] = None;
                     }
-                    score += self.get_score(length, maximizing_player);
-                }
-                if let Some(piece) = self.board[row][col + 3] {
-                    let mut length = 1;
-                    for i in 1..4 {
-                        if self.board[row + i][col + 3 - i] == Some(piece) {
-                            length += 1;
-                        } else {
-                            break;
-                        }
+                    // from (i, j) to bottom right
+                    if i + k < 6 && j + k < 7 {
+                        backward_slash[k] = self.board[i + k][j + k];
+                    } else {
+                        backward_slash[k] = None;
                     }
-                    score += self.get_score(length, maximizing_player);
+                    // from (i, j) to top right
+                    if i as i32 - k as i32 >= 0 && j + k < 7 {
+                        forward_slash[k] = self.board[i - k][j + k];
+                    } else {
+                        forward_slash[k] = None;
+                    }
                 }
+                let score_1 = self.get_score(&left_to_right, maximizing_player);
+                let score_2 = self.get_score(&top_to_bottom, maximizing_player);
+                let score_3 = self.get_score(&forward_slash, maximizing_player);
+                let score_4 = self.get_score(&backward_slash, maximizing_player);
+                // calculate the total score for this position
+                score += score_1 + score_2 + score_3 + score_4;
             }
         }
         score
     }
 
-    fn get_score(&self, length: i32, maximizing_player: bool) -> i32 {
+    fn get_score(&self, line: &[Option<Piece>; 4], maximizing: bool) -> i32 {
         let mut score = 0;
-        //ai will prioritize blocking as much as possible
-        if maximizing_player {
-            score += match length {
-                2 => 10,
-                3 => 100,
-                _ => 0,
-            };
-        } else {
-            score += match length {
-                2 => -10,
-                3 => -100,
-                _ => 0,
-            };
+        let mut user_win = 0;
+        let mut ai_win = 0;
+        let mut empty_cell = 0;
+        for i in 0..line.len(){
+            //red is always human
+            if line[i] == Some(Piece::R) {
+                user_win += 1;
+            }
+            else if line[i] == Some(Piece::Y) {
+                ai_win += 1;
+            }
+            else {
+                empty_cell += 1;
+            }
+        }
+        //if ai can win then prioritize winning
+        if ai_win == 4 {
+            score = 50001;
+        }
+        else if ai_win == 3 && empty_cell == 1 {
+            score = 5000;
+        }
+        else if ai_win == 2 && empty_cell == 2 {
+            score = 501;
+        }
+        else if user_win == 4 {
+            score = -50000;
+        }
+        //block the move
+        else if user_win == 3 && empty_cell == 1 {
+            score = -5001;
+        }
+        else if user_win == 2 && empty_cell == 2 {
+            score = -501;
         }
         score
     }
@@ -292,7 +294,6 @@ impl Connect4 {
                 yellow_found = true;
             }
         }
-
         red_found || yellow_found
     }
 
