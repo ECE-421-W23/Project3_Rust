@@ -104,14 +104,14 @@ impl Connect4Human {
                 } else {
                     self.winner = self.player2.clone();
                 }
-                let message = self.winner.to_string() + " wins - need to fix - Click on game board to reset";
+                let message = self.winner.to_string() + " wins - Click on game board to reset";
                 let canvas: HtmlCanvasElement = self.canvas.cast().unwrap();
                 let context: CanvasRenderingContext2d = canvas.get_context("2d").unwrap().unwrap().unchecked_into();
                 context.save();
                 context.set_font("bold 25px serif");
                 context.set_fill_style(&JsValue::from("#111"));
                 context.begin_path();
-                context.fill_text(&message, (150) as f64, (20) as f64);
+                context.fill_text(&message, (50) as f64, (20) as f64);
                 context.restore();
             }
             None => {}
@@ -125,7 +125,7 @@ impl Connect4Human {
             context.set_font("bold 25px serif");
             context.set_fill_style(&JsValue::from("#111"));
             context.begin_path();
-            context.fill_text(message, (150) as f64, (20) as f64);
+            context.fill_text(message, (50) as f64, (20) as f64);
             context.restore();
         }
     }
@@ -242,7 +242,7 @@ impl Component for Connect4Human {
                 <div class="col-md-offset-3 col-md-8">
                     <input id="textbox1" type="text" placeholder="Player1 Name" oninput={ctx.link().callback(|e: InputEvent| Msg::SetPlayer1Name(e))}/>
                     <input id="textbox2" type="text" placeholder="Player2 Name" oninput={ctx.link().callback(|e: InputEvent| Msg::SetPlayer2Name(e))}/>
-                    <input id="startbutton" class="button" type="submit" onclick={ctx.link().callback(|_| Msg::Connect4)} disabled = {self.player1 == "".to_string() || self.player2 == "".to_string()}/>
+                    <input id="startbutton" class="button" type="Submit" onclick={ctx.link().callback(|_| Msg::Connect4)} disabled = {self.player1 == "".to_string() || self.player2 == "".to_string()}/>
                     </div>
                 </div>
             }
@@ -256,7 +256,7 @@ impl Component for Connect4Human {
                         <small>{format!("(Piece Alloted: {} - ", self.player1)} <b>{"Red"}</b> {format!("   and    {} - ", self.player2)} <b>{"Yellow)"}</b></small>
                         <br/>
                         </div>
-                        </div>
+                </div>
                 </div>
                 }
                 }
