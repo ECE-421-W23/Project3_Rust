@@ -306,7 +306,7 @@ impl Component for TootOttoComputer {
                         <button
                             id="Start Button"
                             onclick={&self.start_event}
-                            disabled={false}
+                            disabled={self.p1_name == "".to_string()}
                             title="Start Game">
                             { "Start Game" }
                         </button>
