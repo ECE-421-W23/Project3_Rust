@@ -4,13 +4,10 @@ use std::rc::Rc;
 
 use common::Connect4::{Connect4, Piece, Player};
 use stdweb::traits::*;
-use stdweb::web::document;
-use stdweb::web::event::{ClickEvent, MouseDownEvent, ResizeEvent};
 use stdweb::web::html_element::{CanvasElement, SelectElement};
 use wasm_bindgen::{JsCast, JsValue, prelude::Closure};
 use wasm_bindgen_futures::JsFuture;
-use web_sys::{RequestInit, window};
-use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, HtmlInputElement, MouseEvent, Request, Response};
+use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, HtmlInputElement, MouseEvent, InputEvent};
 use yew::prelude::*;
 
 pub struct Connect4AI {
@@ -24,8 +21,6 @@ pub struct Connect4AI {
     columns: i32,
     rows: i32,
     current_player: Player,
-    p1_name_event: Callback<InputEvent>,
-    start_event: Callback<MouseEvent>,
     end_event: Callback<MouseEvent>,
     canvas: NodeRef,
     context: Option<CanvasRenderingContext2d>,
@@ -37,7 +32,6 @@ pub enum Msg {
     Connect4,
     EndGame,
     ClickedColumn(Option<usize>),
-    SetDifficulty(usize),
 }
 
 impl Connect4AI {
@@ -107,14 +101,14 @@ impl Connect4AI {
                 } else {
                     self.winner = self.player2.clone();
                 }
-                let message = self.winner.to_string() + " wins - need to fix - Click on game board to reset";
+                let message = self.winner.to_string() + " wins - Click on game board to reset";
                 let canvas: HtmlCanvasElement = self.canvas.cast().unwrap();
                 let context: CanvasRenderingContext2d = canvas.get_context("2d").unwrap().unwrap().unchecked_into();
                 context.save();
                 context.set_font("bold 25px serif");
                 context.set_fill_style(&JsValue::from("#111"));
                 context.begin_path();
-                context.fill_text(&message, (150) as f64, (20) as f64);
+                context.fill_text(&message, (50) as f64, (20) as f64);
                 context.restore();
             }
             None => {}
@@ -128,7 +122,7 @@ impl Connect4AI {
             context.set_font("bold 25px serif");
             context.set_fill_style(&JsValue::from("#111"));
             context.begin_path();
-            context.fill_text(message, (150) as f64, (20) as f64);
+            context.fill_text(message, (50) as f64, (20) as f64);
             context.restore();
         }
     }
@@ -168,8 +162,6 @@ impl Component for Connect4AI {
             columns: 7,
             rows: 6,
             current_player: Player::Red,
-            p1_name_event: _ctx.link().callback(|e: InputEvent| Msg::SetPlayer1Name(e)),
-            start_event: _ctx.link().callback(|_| Msg::Connect4),
             end_event: Default::default(),
             canvas: NodeRef::default(),
             context: None,
@@ -182,6 +174,14 @@ impl Component for Connect4AI {
             Msg::Connect4 => {
                 // handle starting the game here
                 self.is_game_started = true;
+                // get the selected difficulty
+                let document = web_sys::window().unwrap().document().unwrap();
+                let difficulty_drop_down = document.query_selector("#difficulty_drop_down")
+                    .unwrap()
+                    .unwrap()
+                    .dyn_into::<web_sys::HtmlSelectElement>()
+                    .unwrap();
+                self.difficulty = difficulty_drop_down.value().parse::<usize>().unwrap();
                 let canvas: HtmlCanvasElement = self.canvas.cast().unwrap();
                 let rect = canvas.get_bounding_client_rect();
                 let link = _ctx.link().clone();
@@ -229,63 +229,57 @@ impl Component for Connect4AI {
                     self.render_background();
                 }
             }
-            Msg::SetDifficulty(difficulty) => {
-                self.difficulty = difficulty;
-            }
         }
         true
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
         html! {
-            <>
-        {if !self.is_game_started {
-            html! {
-                <div id="main"  style="margin-left:30%">
-                <div class="w3-container" id="services" style="margin-top:75px">
-                    <h5 class="w3-xxxlarge w3-text-red"><b>{"Enter Your Name"}</b></h5>
-                    <hr style="width:50px;border:5px solid red" class="w3-round"/>
-                </div>
-                <div class="col-md-offset-3 col-md-8">
-                    <input id="textbox1" type="text" placeholder="Your Name" oninput={ctx.link().callback(|e: InputEvent| Msg::SetPlayer1Name(e))}/>
-                    <input id="startbutton" class="button" type="submit" onclick={ctx.link().callback(|_| Msg::Connect4)} disabled = {self.player1 == "".to_string()}/>
-
-                </div>
-                /*
-                <label for="difficulty_drop_down"> {"Difficulty:"} </label>
-                    <select id="difficulty_drop_down" style="margin-left: 5px"}>
-                        <option value=1>Option {"Beginner"}</option>
-                        <option value=2>Option {"Intermediate"}</option>
-                        <option value=4>Option {"Professional"}</option>
-                    </select>
-                */
-                </div>
-            }
-        } else {
-            html! {
-                <div style = "margin-top: 75px">
-                    <div class="w3-container" id="services" style="margin-left:30%">
-                        <div>
-                        <h4>{format!("New Game:  {} Vs Computer",self.player1)}</h4>
-                        <br/>
-                        <small>{format!("(Piece Alloted: {} - ", self.player1)} <b>{"Red"}</b> {format!("   and    Computer - " )} <b>{"Yellow)"}</b></small>
-                        <br/>
+        <>
+            {if !self.is_game_started {
+                html! {
+                    <div id="main"  style="margin-left:30%">
+                        <div class="w3-container" id="services" style="margin-top:75px">
+                            <h5 class="w3-xxxlarge w3-text-red"><b>{"Enter Your Name"}</b></h5>
+                            <hr style="width:50px;border:5px solid red" class="w3-round"/>
+                            <div class="col-md-offset-3 col-md-8">
+                                <input id="textbox1" type="text" placeholder="Your Name" oninput={ctx.link().callback(|e: InputEvent| Msg::SetPlayer1Name(e))}/>
+                                <input id="startbutton" class="button" type="Submit" onclick={ctx.link().callback(|_| Msg::Connect4)} disabled = {self.player1 == "".to_string()}/>
+                            </div>
+                            <div>
+                                <label for="difficulty_drop_down"> {"Difficulty:"} </label>
+                                <select id="difficulty_drop_down" style="margin-left: 5px">
+                                    <option value=1 selected=true> {"Beginner"}</option>
+                                    <option value=2 selected=false> {"Intermediate"}</option>
+                                    <option value=4 selected=false> {"Professional"}</option>
+                                </select>
+                            </div>
                         </div>
-                        </div>
-                </div>
+                    </div>
                 }
+            } else {
+                html! {
+                    <div style = "margin-top: 75px">
+                        <div class="w3-container" id="services" style="margin-left:30%">
+                            <div>
+                                <h4>{format!("New Game:  {} Vs {}",self.player1, self.player2)}</h4>
+                                    <p>{format!("Difficulty: {} (1: Beginner, 2: Intermediate, 3: Professional)", self.difficulty)}</p>
+                                <br/>
+                                <small>{format!("(Piece Alloted: {} - ", self.player1)} <b>{"Red"}</b> {format!("   and    {} - ", self.player2)} <b>{"Yellow)"}</b></small>
+                                <br/>
+                            </div>
+                        </div>
+                    </div>
                 }
             }
-        <div style = "margin-top: 75px">
-            <div class="w3-canvas" id="services" style="margin-left:30%">
-            <canvas
-        id="canvas"
-        height = "480" width = "640"
-        ref={self.canvas.clone()}>
-        </canvas>
+            }
+            <div style = "margin-top: 75px">
+                <div class="w3-canvas" id="services" style="margin-left:30%">
+                    <canvas id="canvas" height = "480" width = "640" ref={self.canvas.clone()}>
+                    </canvas>
+                </div>
             </div>
-            </div>
-            </>
+        </>
 
         }
     }
