@@ -1,4 +1,5 @@
 #![allow(non_snake_case)]
+#![allow(unused)]
 
 use std::cell::RefCell;
 use std::f64::consts::PI;
