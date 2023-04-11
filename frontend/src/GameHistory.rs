@@ -5,15 +5,7 @@ use yew::{
 };
 use reqwest;
 use web_sys::console;
-
-#[derive(Clone,Debug, Serialize, Deserialize)]
-pub struct Game {
-	pub gametype: String,
-    pub player1: String,
-    pub player2: String,
-	pub winner: String,
-	pub date: String,
-}
+use common::Backend::Game;
 
 pub struct GameHistory {
     // add any state necessary for the game
@@ -76,23 +68,6 @@ impl Component for GameHistory {
                 true
             }
             FetchStateMsg::GetData => {
-                let game = Game {
-                    gametype: "Kap".to_string(),
-                    player1: "Kap".to_string(),
-                    player2: "Kap".to_string(),
-                    winner: "Kap".to_string(),
-                    date: "temp".to_string(),
-                };/*
-                _ctx.link().send_future(async move{
-                    let client = reqwest::Client::new();
-                    match client.post("http://127.0.0.1:8000/t/games").body(serde_json::to_string(&game).unwrap()).send().await{
-                        Ok(makrup) => {
-                            FetchStateMsg::SetDataFetchState(FetchState::Fetching)
-                        }
-                        Err(err) => {
-                            FetchStateMsg::SetDataFetchState(FetchState::Failed)
-                        }
-                    }});*/
                 _ctx.link().send_future(async move {
                     match reqwest::get("http://127.0.0.1:8000/games").await {
                         Ok(v) => match v.json().await {
