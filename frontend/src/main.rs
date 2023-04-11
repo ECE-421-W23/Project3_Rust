@@ -1,14 +1,17 @@
+use yew::html::Scope;
 use yew::prelude::*;
 use yew_router::prelude::*;
-use yew::html::Scope;
 
 mod Home;
 mod HowToConnect4;
+mod Connect4Computer;
+mod Connect4Human;
 mod HowToToot;
 mod TootOttoHuman;
 mod TootOttoComputer;
 mod GameHistory;
 mod ScoreBoard;
+
 
 #[derive(Routable, Debug, Clone, PartialEq)]
 pub enum Route {
@@ -16,6 +19,10 @@ pub enum Route {
     Home,
     #[at("/HowToConnect4")]
     HowToConnect4,
+    #[at("/Connect4Computer")]
+    Connect4Computer,
+    #[at("/Connect4Human")]
+    Connect4Human,
     #[at("/HowToToot")]
     HowToToot,
     #[at("/TootOttoHuman")]
@@ -65,9 +72,9 @@ impl App {
           <div class="w3-container">
             <h3 class="w3-padding-64"><b>{"Play"}<br/>{"Connect4 / TOOT-OTTO"}</b></h3>
           </div>
-          <Link<Route> to={Route::HowToConnect4}>{ "How to Play Connect 4"}</Link<Route>>
-          <a href="#/Connect4Computer" class="w3-padding w3-hover-white">{"Play Connect4 With Computer"}</a>
-          <a href="#/Connect4Human" class="w3-padding w3-hover-white">{"Play Connect4 with Another Human"}</a>
+            <Link<Route> to={Route::HowToConnect4}>{ "How to Play Connect 4"}</Link<Route>>
+            <Link<Route> to={Route::Connect4Computer}>{"Play Connect4 With Computer"}</Link<Route>>
+            <Link<Route> to={Route::Connect4Human}>{"Play Connect4 with Another Human"}</Link<Route>>
           <br/>
             <Link<Route> to={Route::HowToToot}>{ "How to Play Toot"}</Link<Route>>
             <Link<Route> to={Route::TootOttoComputer}>{ "Play Toot-Otto with Computer"}</Link<Route>>
@@ -84,6 +91,8 @@ fn switch(routes: Route) -> Html {
     match routes {
         Route::Home => html! {<Home::Home />},
         Route::HowToConnect4 => html! {<HowToConnect4::HowToConnect4 />},
+        Route::Connect4Computer => html! {<Connect4Computer::Connect4AI />},
+        Route::Connect4Human => html! {<Connect4Human::Connect4Human />},
         Route::HowToToot => html! {<HowToToot::HowToToot />},
         Route::TootOttoHuman => html! {<TootOttoHuman::TootOttoHuman />},
         Route::TootOttoComputer => html! {<TootOttoComputer::TootOttoComputer />},

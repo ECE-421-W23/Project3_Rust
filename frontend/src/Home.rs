@@ -1,10 +1,11 @@
 #![allow(non_snake_case)]
+
 use yew::prelude::*;
 
 #[function_component]
 pub fn Home() -> Html {
     html! {
-        <div id="main" style="margin-left:30%">
+        <div id="main" style="margin-left:25%">
                 <form>
                     <div class="w3-container" id="services" style="margin-top:75px">
                         <h5 class="w3-xxxlarge w3-text-red"><b>{"Welcome"}</b></h5>
