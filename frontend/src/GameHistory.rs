@@ -28,7 +28,6 @@ pub enum FetchStateMsg<T> {
 
 impl GameHistory {
 	fn get_games(&self) -> Html {
-        println!("{:?}",self.data);
         let games = self.data.iter().enumerate().map(|(i,game)| html! {
 		    <tr>
                 <td>{format!("{} ", i+1)}</td>
