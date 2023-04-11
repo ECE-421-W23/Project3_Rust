@@ -1,11 +1,17 @@
-use mongodb::options::{UpdateOptions,IndexOptions, ClientOptions};
+#[macro_use]
+extern crate rocket;
+use rocket::{serde::json::Json, State};
+
+use mongodb::options::ClientOptions;
 use mongodb::sync::{Client, Database};
-use mongodb::bson::{doc, Document, Bson};
-use mongodb::results::{UpdateResult,InsertOneResult};
-use mongodb::IndexModel;
-use std::env;
+use mongodb::bson::{doc, Document};
+use mongodb::results::InsertOneResult;
 use std::error::Error;
 use serde::{Deserialize, Serialize};
+use rocket::http::Header;
+use rocket::{Request, Response};
+use rocket::fairing::{Fairing, Info, Kind};
+use chrono::prelude::*;
 
 #[derive(Clone, Debug)]
 pub struct DB {
@@ -14,6 +20,7 @@ pub struct DB {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Game {
+	pub gametype: String,
     pub player1: String,
     pub player2: String,
 	pub winner: String,
@@ -29,38 +36,17 @@ impl DB {
 			database: db,
 		})
 	}
-	pub fn insert_user(&self, collection: &str) -> Result<UpdateResult, Box<dyn Error>> {
-		// List the names of the collections in that database.
-		let coll = self.database.collection::<String>("Users");
 
-		let doc = doc! { "name": "John" };
-		let options = UpdateOptions::builder()
-			.upsert(Some(true))
-			.build();
-		let update = doc! { "$inc": { "id": 1 }};
-		Ok(coll.update_one(doc, update,options).unwrap())
-	}
-
-	pub fn get_users(&self) -> Result<(), Box<dyn Error>> {
-		// List the names of the collections in that database.
-		let mut cursor = self.database.collection("Users").find(None, None)?;
-		// regular Stream uses next() and iterates over Option<Result<T>>
-		while let Some(doc) = cursor.next() {
-			let ss: Document = doc?;
-			println!("Yes");
-			println!("{:#?}", ss);
-		}
-        Ok(())
-	}
-
-	pub fn insert_game(&self, player1: &str, player2: &str, winner: &str) -> Result<InsertOneResult, Box<dyn Error>> {
+	pub fn insert_game(&self, gametype: &str, player1: &str, player2: &str, winner: &str) -> Result<InsertOneResult, Box<dyn Error>> {
 		// List the names of the collections in that database.
 		let coll = self.database.collection::<Game>("Games");
+		let now: DateTime<Utc> = Utc::now();
 		let game = Game{
+			gametype: gametype.to_string(),
 			player1: player1.to_string(),
 			player2: player2.to_string(),
 			winner: winner.to_string(),
-			date: "t".to_string(),
+			date: format!("{}", now.format("%I:%M%p on %b %d, %Y")),
 		};
 		Ok(coll.insert_one(game, None).unwrap())
 	}
@@ -78,6 +64,7 @@ impl DB {
 
 	fn doc_to_game(&self, doc: &Document) -> Result<Game, Box<dyn Error>> {
 		let result = Game{
+			gametype: doc.get_str("gametype")?.to_string(),
 			player1: doc.get_str("player1")?.to_string(),
 			player2: doc.get_str("player2")?.to_string(),
 			winner: doc.get_str("winner")?.to_string(),
@@ -88,10 +75,44 @@ impl DB {
 	}
 }
 
-fn main() {
+#[get("/games")]
+fn get_games(db: &State<DB>) -> Json<Vec<Game>> {
+	let result = db.get_games();
+	match result {
+		Ok(v) => Json(v),
+		_=> Json(Vec::new()),
+	}
+}
+
+#[post("/games", data="<game>")]
+fn add_games(game: Json<Game>, db: &State<DB>) {
+    db.insert_game(&game.gametype,&game.player1,&game.player2,&game.winner);
+}
+
+pub struct CORS;
+#[rocket::async_trait]
+impl Fairing for CORS {
+    fn info(&self) -> Info {
+        Info {
+            name: "Add CORS headers to responses",
+            kind: Kind::Response
+        }
+    }
+
+    async fn on_response<'r>(&self, _request: &'r Request<'_>, response: &mut Response<'r>) {
+        response.set_header(Header::new("Access-Control-Allow-Origin", "*"));
+        response.set_header(Header::new("Access-Control-Allow-Methods", "POST, GET, PATCH, OPTIONS"));
+        response.set_header(Header::new("Access-Control-Allow-Headers", "*"));
+        response.set_header(Header::new("Access-Control-Allow-Credentials", "true"));
+    }
+}
+
+#[launch]
+fn rocket() -> _ {
 	let db = DB::new().unwrap();
-	//db.insert_user("user2");
-	//db.get_users();
-	println!("{:#?}",db.insert_game("user3","user3","user3"));
-	println!("{:#?}", db.get_games());
+    rocket::build()
+	.manage(db)
+	.mount("/", routes![get_games])
+	.mount("/t", routes![add_games])
+	.attach(CORS)
 }

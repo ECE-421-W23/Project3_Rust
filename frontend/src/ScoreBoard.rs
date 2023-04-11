@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use yew::{
     prelude::*
 };
-use reqwasm::http::Request;
+use reqwest;
 use web_sys::console;
 
 #[derive(Clone,Debug, Serialize, Deserialize)]
@@ -54,19 +54,14 @@ impl Component for ScoreBoard {
     type Properties = ();
 
     fn create(_ctx: &Context<Self>) -> Self {
+        
         Self {
             data: Vec::new(),
             state: FetchState::NotFetching,
         }
     }
-    /*
-    fn changed(&mut self, ctx: &Context<Self>, props: Self::Properties) -> bool {
-        ctx.link().send_message(FetchStateMsg::GetData);
-        true
-    }*/
 
     fn update(&mut self, _ctx: &Context<Self>, _msg: Self::Message) -> bool {
-        console::log_1(&"Hello using web-sys".into());
         match _msg {
             FetchStateMsg::SetDataFetchState(state) => {
                 match state.clone() {
@@ -80,7 +75,7 @@ impl Component for ScoreBoard {
             }
             FetchStateMsg::GetData => {
                 _ctx.link().send_future(async move {
-                    match Request::get("http://127.0.0.1:8000/data").send().await {
+                    match reqwest::get("http://127.0.0.1:8000/games").await {
                         Ok(makrup) => match makrup.json().await {
                             Ok(makrup) => {
                                 FetchStateMsg::SetDataFetchState(FetchState::Success(makrup))

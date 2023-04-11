@@ -1,28 +1,146 @@
 #![allow(non_snake_case)]
-use yew::prelude::*;
+use serde::{Deserialize, Serialize};
+use yew::{
+    prelude::*
+};
+use reqwest;
+use web_sys::console;
 
-#[function_component]
-pub fn GameHistory() -> Html {
-    html! {
-        <div style = "margin-top: 75px">
-        <div class="w3-container" id="services" style="margin-left:30%">
-        <h5 class="w3-xxxlarge w3-text-red"><b>{"How to Play Connect 4"}</b></h5>
-        <hr style="width:50px;border:5px solid red" class="w3-round"/>
-        <p>{"Connect Four is a two-player connection game in which the players take turns dropping colored discs from the top into a seven-column, six-row vertically suspended grid. The objective of the game is to be the first to form a horizontal, vertical, or diagonal line of four of one's own discs."}
-        </p>
-        <br/>
-        <div><h5>{"To play Connect 4 follow the following steps:"}</h5></div>
-        <ul>
+#[derive(Clone,Debug, Serialize, Deserialize)]
+pub struct Game {
+	pub gametype: String,
+    pub player1: String,
+    pub player2: String,
+	pub winner: String,
+	pub date: String,
+}
 
-		    <li>{"A new game describes discs of which color belongs to which player"}</li>
+pub struct GameHistory {
+    // add any state necessary for the game
+    state: FetchState<Vec<Game>>,
+    data: Vec<Game>,
+}
 
-		    <li>{"Click on the desired column on the game board to place your disc"}</li>
+/// The possible states a fetch request can be in.
+#[derive(Debug, Clone, PartialEq)]
+pub enum FetchState<T> {
+    NotFetching,
+    Fetching,
+    Success(T),
+    Failed,
+}
 
-		    <li>{"Try to connect 4 of your colored discs either horizontally or vertically or diagonally"}</li>
+pub enum FetchStateMsg<T> {
+    SetDataFetchState(FetchState<T>),
+    GetData,
+}
 
-	    </ul>
-        <br/> {"For More information on Connect 4 click "}<a href="https://en.wikipedia.org/wiki/Connect_Four">{"here"}</a>
-        </div>
-        </div>
+impl GameHistory {
+	fn get_games(&self) -> Html {
+        println!("{:?}",self.data);
+        let games = self.data.iter().enumerate().map(|(i,game)| html! {
+		    <tr>
+                <td>{format!("{} ", i+1)}</td>
+                <td>{format!("{} ", game.gametype)}</td>
+			    <td>{format!("{} ", game.player1)}</td>
+			    <td>{format!("{} ", game.player2)}</td>
+			    <td>{format!("{} ", game.winner)}</td>
+			    <td>{format!("{} ", game.date)}</td>
+		    </tr>
+	    }).collect::<Html>();
+	    games
     }
+}
+
+impl Component for GameHistory {
+    type Message = FetchStateMsg<Vec<Game>>;
+    type Properties = ();
+
+    fn create(_ctx: &Context<Self>) -> Self {
+        Self {
+            data: Vec::new(),
+            state: FetchState::NotFetching,
+        }
+    }
+
+    fn update(&mut self, _ctx: &Context<Self>, _msg: Self::Message) -> bool {
+        match _msg {
+            FetchStateMsg::SetDataFetchState(state) => {
+                match state.clone() {
+                    FetchState::Success(s2) => {
+                        self.data = s2;
+                    },
+                    _=> (),
+                }
+                self.state = state;
+                true
+            }
+            FetchStateMsg::GetData => {
+                let game = Game {
+                    gametype: "Kap".to_string(),
+                    player1: "Kap".to_string(),
+                    player2: "Kap".to_string(),
+                    winner: "Kap".to_string(),
+                    date: "temp".to_string(),
+                };/*
+                _ctx.link().send_future(async move{
+                    let client = reqwest::Client::new();
+                    match client.post("http://127.0.0.1:8000/t/games").body(serde_json::to_string(&game).unwrap()).send().await{
+                        Ok(makrup) => {
+                            FetchStateMsg::SetDataFetchState(FetchState::Fetching)
+                        }
+                        Err(err) => {
+                            FetchStateMsg::SetDataFetchState(FetchState::Failed)
+                        }
+                    }});*/
+                _ctx.link().send_future(async move {
+                    match reqwest::get("http://127.0.0.1:8000/games").await {
+                        Ok(v) => match v.json().await {
+                            Ok(v) => {
+                                FetchStateMsg::SetDataFetchState(FetchState::Success(v))
+                            }
+                            Err(err) => {
+                                FetchStateMsg::SetDataFetchState(FetchState::Failed)
+                            }
+                        }
+                        Err(err) => {
+                            FetchStateMsg::SetDataFetchState(FetchState::Failed)
+                        }
+                    }
+                });
+                _ctx.link()
+                    .send_message(FetchStateMsg::SetDataFetchState(FetchState::Fetching));
+                false
+            }
+        }
+    }
+
+    fn view(&self, _ctx: &Context<Self>) -> Html {
+        if matches!(&self.state, &FetchState::NotFetching) {
+            _ctx.link().send_message(FetchStateMsg::GetData);
+        }
+        html! {
+		    <div style = "margin-top: 75px">
+		    <div class="w3-container" id="services" style="margin-left:30%">
+		    <h5 class="w3-xxxlarge w3-text-red"><b>{"Game History"}</b></h5>
+		    <hr style="width:50px;border:5px solid red" class="w3-round"/>
+    
+		    <div id="game-stream">
+		    <table>
+			    <tr>
+				    <th>{"Game-ID"}</th>
+				    <th>{"Game-Type"}</th>
+				    <th>{"Player1"}</th>
+				    <th>{"Player2"}</th>
+				    <th>{"Winner"}</th>
+				    <th>{"Date"}</th>
+  			    </tr>
+			    { self.get_games() }
+		    </table>		
+			    </div>
+		    </div>
+		    </div>
+        }
+    }
+
 }
