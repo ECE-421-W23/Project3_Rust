@@ -1,4 +1,5 @@
 #![allow(non_snake_case)]
+#![allow(unused)]
 
 use std::cell::RefCell;
 use std::f64::consts::PI;
@@ -6,13 +7,8 @@ use std::rc::Rc;
 
 use common::Backend::Game;
 use common::Connect4::{Connect4, Piece, Player};
-use stdweb::traits::*;
-use stdweb::web::event::{ClickEvent, MouseDownEvent, ResizeEvent};
-use stdweb::web::html_element::{CanvasElement, SelectElement};
 use wasm_bindgen::{JsCast, JsValue, prelude::Closure};
-use wasm_bindgen_futures::JsFuture;
-use web_sys::{RequestInit, window};
-use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, HtmlInputElement, MouseEvent};
+use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, MouseEvent};
 use yew::prelude::*;
 
 pub struct Connect4Human {
@@ -22,13 +18,11 @@ pub struct Connect4Human {
     player2: String,
     winner: String,
     is_game_over: bool,
-    clicked_column: usize,
     columns: usize,
     rows: usize,
     current_player: Player,
     end_event: Callback<String>,
     canvas: NodeRef,
-    context: Option<CanvasRenderingContext2d>,
 }
 
 pub enum Msg {
@@ -61,7 +55,7 @@ impl Connect4Human {
                         25.0,
                         0.0,
                         2.0 * PI,
-                    );
+                    ).expect("Failed to fill text");
                     context.fill();
                     context.set_font("bold 25px serif");
                     context.set_fill_style(&JsValue::from("#111"));
@@ -69,7 +63,7 @@ impl Connect4Human {
                         Piece::R => "R",
                         Piece::Y => "Y",
                     };
-                    context.fill_text(text, (75 * col + 92) as f64, (75 * row + 58) as f64);
+                    context.fill_text(text, (75 * col + 92) as f64, (75 * row + 58) as f64).expect("Failed to fill text");
                 }
             }
         }
@@ -84,7 +78,7 @@ impl Connect4Human {
         context.begin_path();
         for y in 0..self.rows {
             for x in 0..self.columns {
-                let err = context.arc(
+                let _err = context.arc(
                     (75 * x + 100) as f64,
                     (75 * y + 50) as f64,
                     25.0,
@@ -114,7 +108,7 @@ impl Connect4Human {
                 context.set_font("bold 25px serif");
                 context.set_fill_style(&JsValue::from("#111"));
                 context.begin_path();
-                context.fill_text(&message, (50) as f64, (20) as f64);
+                context.fill_text(&message, (50) as f64, (20) as f64).expect("Failed to fill text");
                 context.restore();
                 &self.end_event.emit("end".to_string());
             }
@@ -129,7 +123,7 @@ impl Connect4Human {
             context.set_font("bold 25px serif");
             context.set_fill_style(&JsValue::from("#111"));
             context.begin_path();
-            context.fill_text(message, (50) as f64, (20) as f64);
+            context.fill_text(message, (50) as f64, (20) as f64).expect("Failed to fill text");
             context.restore();
             &self.end_event.emit("end".to_string());
         }
@@ -163,13 +157,11 @@ impl Component for Connect4Human {
             player2: "".to_string(), //just done to add name on the scoreboard
             winner: "".to_string(),
             is_game_over: false,
-            clicked_column: 0,
             columns: 7,
             rows: 6,
             current_player: Player::Red,
             end_event: _ctx.link().callback(|_| Msg::EndGame),
             canvas: NodeRef::default(),
-            context: None,
         }
     }
 
@@ -219,7 +211,7 @@ impl Component for Connect4Human {
                         winner: self.winner.clone(),
                         date: "temp".to_string(),
                     };
-                
+
                 _ctx.link().send_future(async move{
                     let client = reqwest::Client::new();
                     match client.post("http://127.0.0.1:8000/t/games").body(serde_json::to_string(&game).unwrap()).send().await{
@@ -305,14 +297,3 @@ impl Component for Connect4Human {
         }
     }
 }
-
-macro_rules! enclose {
-    ( ($( $x:ident ),*) $y:expr ) => {
-        {
-            $(let $x = $x.clone();)*
-            $y
-        }
-    };
-}
-
-

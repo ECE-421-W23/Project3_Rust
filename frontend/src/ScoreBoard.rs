@@ -1,10 +1,10 @@
 #![allow(non_snake_case)]
+#![allow(unused)]
 use serde::{Deserialize, Serialize};
 use yew::{
     prelude::*
 };
 use reqwest;
-use web_sys::console;
 
 #[derive(Clone,Debug, Serialize, Deserialize)]
 pub struct Game {
