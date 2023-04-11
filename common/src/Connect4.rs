@@ -235,13 +235,13 @@ impl Connect4 {
         }
         //block the move
         else if user_win == 3 && empty_cell == 1 {
-            score = 10000;
+            score = 9000;
         }
         else if user_win == 2 && empty_cell == 2 {
-            score = 1000;
+            score = 900;
         }
         else if user_win == 1 && empty_cell == 3 {
-            score = 100;
+            score = 90;
         }
         score
     }
