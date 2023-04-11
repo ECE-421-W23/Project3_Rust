@@ -34,16 +34,14 @@ pub enum FetchStateMsg<T> {
 
 impl ScoreBoard {
 	fn get_compgames(&self) -> Html {
-        let games = self.data.iter().enumerate().map(|(i,game)| html! {
-            if game.player2 == "Computer" {
-                <tr>
-                    <td>{format!("{} ", i+1)}</td>
-                    <td>{format!("{} ", game.gametype)}</td>
-			        <td>{format!("{} ", game.winner)}</td>
-			        <td>{format!("{} ", game.player1)}</td>
-			        <td>{format!("{} ", game.date)}</td>
-		        </tr>
-            }
+        let games = self.data.iter().filter(|game| game.player2 == "Computer").enumerate().map(|(i,game)| html! {
+            <tr>
+                <td>{format!("{} ", i+1)}</td>
+                <td>{format!("{} ", game.gametype)}</td>
+                <td>{format!("{} ", game.winner)}</td>
+                <td>{format!("{} ", game.player1)}</td>
+                <td>{format!("{} ", game.date)}</td>
+            </tr>
 	    }).collect::<Html>();
 	    games
     }
