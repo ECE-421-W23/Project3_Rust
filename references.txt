@@ -13,3 +13,7 @@ Canvas:
   https://subscription.packtpub.com/book/game-development/9781801070973/2/ch02lvl1sec06/drawing-to-the-canvas
   https://yew.rs/docs/next/concepts/basic-web-technologies/web-sys
   
+For backend:
+  https://stackoverflow.com/questions/62412361/how-to-set-up-cors-or-options-for-rocket-rs
+  https://dev.to/hackmamba/build-a-rest-api-with-rust-and-mongodb-rocket-version-ah5
+  https://theadventuresofaliceandbob.com/posts/rust_rocket_yew_part1.md
