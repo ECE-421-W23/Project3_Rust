@@ -38,6 +38,7 @@ pub enum Msg {
     EndGame,
     SetDisc(String),
     ClickedColumn(Option<usize>),
+    Record(),
 }
 
 impl TootOttoHuman {
@@ -303,6 +304,7 @@ impl Component for TootOttoHuman {
                     self.render_background();
                 }
             }
+            _ => {}
         }
         true
     }

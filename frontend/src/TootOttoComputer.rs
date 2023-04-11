@@ -6,7 +6,6 @@ use std::rc::Rc;
 
 use common::TootOtto::{Piece, Player, TootOtto, Difficulty};
 use common::Backend::Game;
-use common::TootOtto::{Piece, Player, TootOtto};
 use stdweb::traits::*;
 use stdweb::unstable::TryInto;
 use stdweb::web::document;
@@ -126,7 +125,7 @@ impl TootOttoComputer {
                 context.set_font("bold 25px serif");
                 context.set_fill_style(&JsValue::from("#111"));
                 context.begin_path();
-                context.fill_text(&message, (150) as f64, (20) as f64).expect("Failed to fill text");
+                context.fill_text(&message, (50) as f64, (20) as f64).expect("Failed to fill text");
                 context.restore();
                 &self.end_event.emit("end".to_string());
             }
@@ -140,7 +139,7 @@ impl TootOttoComputer {
             context.set_font("bold 25px serif");
             context.set_fill_style(&JsValue::from("#111"));
             context.begin_path();
-            context.fill_text(message, (150) as f64, (20) as f64).expect("Failed to fill text");
+            context.fill_text(message, (50) as f64, (20) as f64).expect("Failed to fill text");
             context.restore();
             &self.end_event.emit("end".to_string());
         }
