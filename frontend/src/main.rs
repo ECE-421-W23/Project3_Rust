@@ -1,4 +1,5 @@
 #![recursion_limit = "1024"]
+#![allow(non_snake_case)]
 use yew::html::Scope;
 use yew::prelude::*;
 use yew_router::prelude::*;

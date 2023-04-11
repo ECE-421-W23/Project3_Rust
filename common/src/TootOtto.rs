@@ -122,7 +122,7 @@ impl TootOtto {
 
 
     pub fn make_move_by_ai(&mut self) {
-        let mut depth:i32;
+        let depth:i32;
         let mut rand_piece = Piece::T;
         match self.difficulty{
             Difficulty::Easy => {

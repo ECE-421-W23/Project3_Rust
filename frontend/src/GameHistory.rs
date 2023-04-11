@@ -1,10 +1,9 @@
 #![allow(non_snake_case)]
-use serde::{Deserialize, Serialize};
+#![allow(unused)]
 use yew::{
     prelude::*
 };
 use reqwest;
-use web_sys::console;
 use common::Backend::Game;
 
 pub struct GameHistory {

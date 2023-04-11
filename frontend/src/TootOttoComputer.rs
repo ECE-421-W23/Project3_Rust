@@ -1,4 +1,5 @@
 #![allow(non_snake_case)]
+#![allow(unused)]
 
 use std::cell::RefCell;
 use std::f64::consts::PI;
@@ -7,10 +8,6 @@ use std::rc::Rc;
 use common::TootOtto::{Piece, Player, TootOtto, Difficulty};
 use common::Backend::Game;
 use stdweb::traits::*;
-use stdweb::unstable::TryInto;
-use stdweb::web::document;
-use stdweb::web::event::{ClickEvent, MouseDownEvent, ResizeEvent};
-use stdweb::web::html_element::{CanvasElement, SelectElement};
 use wasm_bindgen::{JsCast, JsValue, prelude::Closure};
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, HtmlInputElement, MouseEvent};
 use yew::prelude::*;
@@ -69,7 +66,7 @@ impl TootOttoComputer {
                         25.0,
                         0.0,
                         2.0 * PI,
-                    ).expect("Failed to fill text");;
+                    ).expect("Failed to fill text");
                     context.fill();
                     context.set_font("bold 25px serif");
                     context.set_fill_style(&JsValue::from("#111"));
