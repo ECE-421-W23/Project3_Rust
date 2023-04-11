@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
-
-use crate::Connect4::Piece::R;
+use rand::Rng;
 
 #[derive(Clone, Debug)]
 pub struct Connect4 {
@@ -99,42 +98,58 @@ impl Connect4 {
 
     pub fn ai_move(&mut self, depth: usize) -> bool {
         let mut done = false;
-        let mut new_depth = 5 - depth;
-        let (column, _score) = self.minimax(new_depth as i32, true);
-        if column < 7 {
-            let piece = if self.current_player == Player::Red { Piece::R } else { Piece::Y };
-            if self.place_piece(column, piece).is_some() {
-                done = true;
-                self.current_player = match self.current_player {
-                    Player::Red => Player::Yellow,
-                    Player::Yellow => Player::Red,
-                };
+        let piece = if self.current_player == Player::Red { Piece::R } else { Piece::Y };
+        //if difficulty is easy, randomize ai input
+        if depth.clone() == 1 {
+            let mut rng = rand::thread_rng();
+            loop {
+                let random_col = rng.gen_range(0..7);
+                if self.place_piece(random_col, piece).is_some() {
+                    done = true;
+                    break;
+                }
             }
         }
+        else {
+            //reduce depth as we dont want to waste resources
+            let new_depth = match depth {
+                2 => 1,
+                4 => 2,
+                _ => 1,
+            };
+            let (column, _score) = self.minimax(new_depth as i32, piece.clone());
+            if column < 7 && self.place_piece(column, piece).is_some() {
+                done = true;
+            }
+        }
+        self.current_player = match self.current_player {
+            Player::Red => Player::Yellow,
+            Player::Yellow => Player::Red,
+        };
         done
     }
 
-    fn minimax(&mut self, depth: i32, maximizing_player: bool) -> (usize, i32) {
+    fn minimax(&mut self, depth: i32, piece: Piece) -> (usize, i32) {
         if depth == 0 || self.is_draw() || self.is_over() {
-            return (0, self.evaluate_board(maximizing_player));
+            return (0, self.evaluate_board());
         }
-
-        let mut best_score = if maximizing_player { i32::MIN } else { i32::MAX };
+        //AI is always minimising the score, so start with max
+        let mut best_score = i32::MAX;
         let mut best_col = 0;
         for column in 0..7 {
             if self.board[0][column].is_some() {
                 continue;
             }
-            let piece = if self.current_player == Player::Red { Piece::R } else { Piece::Y };
-            let row = self.place_piece(column, piece);
+            let row = self.place_piece(column, piece.clone());
             if row.is_some() {
-                let (_, score) = self.minimax(depth - 1, !maximizing_player);
+                let next_piece = match piece {
+                    Piece::R => Piece::Y,
+                    Piece::Y => Piece::R,
+                };
+                let (_, score) = self.minimax(depth - 1, next_piece);
                 self.remove_piece(row.unwrap(), column);
                 // Update the best move and score if we found a better one
-                if maximizing_player && score > best_score {
-                    best_score = score;
-                    best_col = column;
-                } else if !maximizing_player && score < best_score {
+                if score < best_score {
                     best_score = score;
                     best_col = column;
                 }
@@ -143,7 +158,7 @@ impl Connect4 {
         (best_col, best_score)
     }
 
-    fn evaluate_board(&self, maximizing_player: bool) -> i32 {
+    fn evaluate_board(&self) -> i32 {
         let mut score = 0;
         let mut left_to_right = [None; 4];
         let mut top_to_bottom = [None; 4];
@@ -178,10 +193,10 @@ impl Connect4 {
                         forward_slash[k] = None;
                     }
                 }
-                let score_1 = self.get_score(&left_to_right, maximizing_player);
-                let score_2 = self.get_score(&top_to_bottom, maximizing_player);
-                let score_3 = self.get_score(&forward_slash, maximizing_player);
-                let score_4 = self.get_score(&backward_slash, maximizing_player);
+                let score_1 = self.get_score(&left_to_right);
+                let score_2 = self.get_score(&top_to_bottom);
+                let score_3 = self.get_score(&forward_slash);
+                let score_4 = self.get_score(&backward_slash);
                 // calculate the total score for this position
                 score += score_1 + score_2 + score_3 + score_4;
             }
@@ -189,42 +204,45 @@ impl Connect4 {
         score
     }
 
-    fn get_score(&self, line: &[Option<Piece>; 4], maximizing: bool) -> i32 {
+    fn get_score(&self, line: &[Option<Piece>; 4]) -> i32 {
+        //red is always human and ai is always the minimising player
         let mut score = 0;
         let mut user_win = 0;
         let mut ai_win = 0;
         let mut empty_cell = 0;
         for i in 0..line.len(){
-            //red is always human
             if line[i] == Some(Piece::R) {
-                user_win += 1;
-            }
-            else if line[i] == Some(Piece::Y) {
-                ai_win += 1;
-            }
-            else {
+                user_win += 1; // Increment user_win count
+                ai_win = 0; // Reset ai_win count
+            } else if line[i] == Some(Piece::Y) {
+                ai_win += 1; // Increment ai_win count
+                user_win = 0; // Reset user_win count
+            } else {
                 empty_cell += 1;
             }
         }
         //if ai can win then prioritize winning
         if ai_win == 4 {
-            score = 50001;
+            score = -10000;
         }
         else if ai_win == 3 && empty_cell == 1 {
-            score = 5000;
+            score = -1000;
         }
         else if ai_win == 2 && empty_cell == 2 {
-            score = 501;
+            score = -100;
         }
-        else if user_win == 4 {
-            score = -50000;
+        else if ai_win == 1 && empty_cell == 3 {
+            score = -10;
         }
         //block the move
         else if user_win == 3 && empty_cell == 1 {
-            score = -5001;
+            score = 10000;
         }
         else if user_win == 2 && empty_cell == 2 {
-            score = -501;
+            score = 1000;
+        }
+        else if user_win == 1 && empty_cell == 3 {
+            score = 100;
         }
         score
     }

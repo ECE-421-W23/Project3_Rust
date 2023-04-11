@@ -130,10 +130,10 @@ impl Connect4AI {
     }
 
     fn make_move(&mut self, col: usize) {
-        self.game.borrow_mut().user_move(col);
+        let _done = self.game.borrow_mut().user_move(col);
         self.check_winner();
         if !self.is_game_over {
-            self.game.borrow_mut().ai_move(self.difficulty.clone());
+            let _ai_done = self.game.borrow_mut().ai_move(self.difficulty.clone());
         }
     }
 

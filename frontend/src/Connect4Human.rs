@@ -131,7 +131,7 @@ impl Connect4Human {
     }
 
     fn make_move(&mut self, col: usize) {
-        self.game.borrow_mut().user_move(col);
+        let _done = self.game.borrow_mut().user_move(col);
     }
 
     fn new_game(&mut self) {
