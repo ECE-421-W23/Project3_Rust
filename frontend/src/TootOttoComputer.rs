@@ -5,9 +5,17 @@ use std::f64::consts::PI;
 use std::rc::Rc;
 
 use common::TootOtto::{Piece, Player, TootOtto, Difficulty};
+use common::Backend::Game;
+use common::TootOtto::{Piece, Player, TootOtto};
+use stdweb::traits::*;
+use stdweb::unstable::TryInto;
+use stdweb::web::document;
+use stdweb::web::event::{ClickEvent, MouseDownEvent, ResizeEvent};
+use stdweb::web::html_element::{CanvasElement, SelectElement};
 use wasm_bindgen::{JsCast, JsValue, prelude::Closure};
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, HtmlInputElement, MouseEvent};
 use yew::prelude::*;
+use reqwest;
 
 pub struct TootOttoComputer {
     // add any state necessary for the game
@@ -23,7 +31,7 @@ pub struct TootOttoComputer {
     p1_name_event: Callback<InputEvent>,
     disc_change_event: Callback<MouseEvent>,
     start_event: Callback<MouseEvent>,
-    end_event: Callback<MouseEvent>,
+    end_event: Callback<String>,
     canvas: NodeRef,
     context: Option<CanvasRenderingContext2d>,
 }
@@ -120,6 +128,7 @@ impl TootOttoComputer {
                 context.begin_path();
                 context.fill_text(&message, (150) as f64, (20) as f64).expect("Failed to fill text");
                 context.restore();
+                &self.end_event.emit("end".to_string());
             }
         };
         if self.game.borrow_mut().is_draw() == true {
@@ -133,6 +142,7 @@ impl TootOttoComputer {
             context.begin_path();
             context.fill_text(message, (150) as f64, (20) as f64).expect("Failed to fill text");
             context.restore();
+            &self.end_event.emit("end".to_string());
         }
     }
 
@@ -208,7 +218,7 @@ impl Component for TootOttoComputer {
                 Msg::SetDisc(value)
             }),
             start_event: _ctx.link().callback(|_| Msg::StartGame),
-            end_event: Default::default(),
+            end_event: _ctx.link().callback(|_| Msg::EndGame),
             canvas: NodeRef::default(),
             context: None,
         }
@@ -275,7 +285,26 @@ impl Component for TootOttoComputer {
                     self.render_background();
                 }
             }
-            Msg::EndGame => {}
+            Msg::EndGame => {
+                let game = Game {
+                        gametype: "TootOtto".to_string(),
+                        player1: self.p1_name.clone(),
+                        player2: "Computer".to_string(),
+                        winner: self.winner.clone(),
+                        date: "temp".to_string(),
+                    };
+                
+                _ctx.link().send_future(async move{
+                    let client = reqwest::Client::new();
+                    match client.post("http://127.0.0.1:8000/t/games").body(serde_json::to_string(&game).unwrap()).send().await{
+                        Ok(v) => {
+                            Msg::Record()
+                        }
+                        Err(err) => {
+                            Msg::Record()
+                        }
+                    }});
+            }
             Msg::SetDisc(disc) => {
                 if disc == "T".to_string() {
                     self.selected_letter = 'T'

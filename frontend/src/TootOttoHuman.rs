@@ -4,10 +4,12 @@ use std::cell::RefCell;
 use std::f64::consts::PI;
 use std::rc::Rc;
 
+use common::Backend::Game;
 use common::TootOtto::{Piece, Player, TootOtto};
 use wasm_bindgen::{JsCast, JsValue, prelude::Closure};
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, HtmlInputElement, MouseEvent};
 use yew::prelude::*;
+use reqwest;
 
 pub struct TootOttoHuman {
     // add any state necessary for the game
@@ -24,6 +26,7 @@ pub struct TootOttoHuman {
     p2_name_event: Callback<InputEvent>,
     disc_change_event: Callback<MouseEvent>,
     start_event: Callback<MouseEvent>,
+    end_event: Callback<String>,
     canvas: NodeRef,
 }
 
@@ -119,6 +122,7 @@ impl TootOttoHuman {
                 context.begin_path();
                 context.fill_text(&message, (50) as f64, (20) as f64).expect("Failed to fill text");
                 context.restore();
+                &self.end_event.emit("end".to_string());
             }
         };
         if self.game.borrow_mut().is_draw() == true {
@@ -132,6 +136,7 @@ impl TootOttoHuman {
             context.begin_path();
             context.fill_text(message, (50) as f64, (20) as f64).expect("Failed to fill text");
             context.restore();
+            &self.end_event.emit("end".to_string());
         }
     }
 
@@ -199,6 +204,7 @@ impl Component for TootOttoHuman {
                 Msg::SetDisc(value)
             }),
             start_event: _ctx.link().callback(|_| Msg::StartGame),
+            end_event: _ctx.link().callback(|_| Msg::EndGame),
             canvas: NodeRef::default(),
         }
     }
@@ -250,7 +256,26 @@ impl Component for TootOttoHuman {
                     self.render_background();
                 }
             }
-            Msg::EndGame => {}
+            Msg::EndGame => {
+                let game = Game {
+                    gametype: "TootOtto".to_string(),
+                    player1: self.p1_name.clone(),
+                    player2: self.p2_name.clone(),
+                    winner: self.winner.clone(),
+                    date: "temp".to_string(),
+                };
+                
+                _ctx.link().send_future(async move{
+                    let client = reqwest::Client::new();
+                    match client.post("http://127.0.0.1:8000/t/games").body(serde_json::to_string(&game).unwrap()).send().await{
+                        Ok(v) => {
+                            Msg::Record()
+                        }
+                        Err(err) => {
+                            Msg::Record()
+                        }
+                    }});
+            }
             Msg::SetDisc(disc) => {
                 if disc == "T".to_string() {
                     self.selected_letter = 'T'

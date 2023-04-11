@@ -10,6 +10,8 @@ mod Connect4Human;
 mod HowToToot;
 mod TootOttoHuman;
 mod TootOttoComputer;
+mod GameHistory;
+mod ScoreBoard;
 
 
 #[derive(Routable, Debug, Clone, PartialEq)]
@@ -28,6 +30,10 @@ pub enum Route {
     TootOttoHuman,
     #[at("/TootOttoComputer")]
     TootOttoComputer,
+    #[at("/GameHistory")]
+    GameHistory,
+    #[at("/ScoreBoard")]
+    ScoreBoard,
 }
 
 
@@ -75,8 +81,8 @@ impl App {
             <Link<Route> to={Route::TootOttoComputer}>{ "Play Toot-Otto with Computer"}</Link<Route>>
             <Link<Route> to={Route::TootOttoHuman}>{ "Play Toot-Otto with Another Human"}</Link<Route>>
           <br/>
-          <a href="#/ScoreBoard" class="w3-padding w3-hover-white">{"View Game History"}</a>
-          <a href="#/Scores" class="w3-padding w3-hover-white">{"Score Board"}</a>
+            <Link<Route> to={Route::GameHistory}>{"View Game History"}</Link<Route>>
+            <Link<Route> to={Route::ScoreBoard}>{"Score Board"}</Link<Route>>
         </nav>
         }
     }
@@ -91,6 +97,8 @@ fn switch(routes: Route) -> Html {
         Route::HowToToot => html! {<HowToToot::HowToToot />},
         Route::TootOttoHuman => html! {<TootOttoHuman::TootOttoHuman />},
         Route::TootOttoComputer => html! {<TootOttoComputer::TootOttoComputer />},
+        Route::GameHistory => html! {<GameHistory::GameHistory />},
+        Route::ScoreBoard => html! {<ScoreBoard::ScoreBoard />},
     }
 }
 
