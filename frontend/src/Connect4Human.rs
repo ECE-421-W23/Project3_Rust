@@ -1,8 +1,10 @@
 #![allow(non_snake_case)]
+
 use std::cell::RefCell;
 use std::f64::consts::PI;
 use std::rc::Rc;
 
+use common::Backend::Game;
 use common::Connect4::{Connect4, Piece, Player};
 use stdweb::traits::*;
 use stdweb::web::event::{ClickEvent, MouseDownEvent, ResizeEvent};
@@ -24,7 +26,7 @@ pub struct Connect4Human {
     columns: usize,
     rows: usize,
     current_player: Player,
-    end_event: Callback<MouseEvent>,
+    end_event: Callback<String>,
     canvas: NodeRef,
     context: Option<CanvasRenderingContext2d>,
 }
@@ -35,6 +37,7 @@ pub enum Msg {
     Connect4,
     EndGame,
     ClickedColumn(Option<usize>),
+    Record(),
 }
 
 impl Connect4Human {
@@ -113,6 +116,7 @@ impl Connect4Human {
                 context.begin_path();
                 context.fill_text(&message, (50) as f64, (20) as f64);
                 context.restore();
+                &self.end_event.emit("end".to_string());
             }
             None => {}
         };
@@ -127,6 +131,7 @@ impl Connect4Human {
             context.begin_path();
             context.fill_text(message, (50) as f64, (20) as f64);
             context.restore();
+            &self.end_event.emit("end".to_string());
         }
     }
 
@@ -162,7 +167,7 @@ impl Component for Connect4Human {
             columns: 7,
             rows: 6,
             current_player: Player::Red,
-            end_event: Default::default(),
+            end_event: _ctx.link().callback(|_| Msg::EndGame),
             canvas: NodeRef::default(),
             context: None,
         }
@@ -206,7 +211,26 @@ impl Component for Connect4Human {
                     self.player2 += &e.data().unwrap().to_owned();
                 }
             }
-            Msg::EndGame => {}
+            Msg::EndGame => {
+                let game = Game {
+                        gametype: "Connect4".to_string(),
+                        player1: self.player1.clone(),
+                        player2: self.player2.clone(),
+                        winner: self.winner.clone(),
+                        date: "temp".to_string(),
+                    };
+                
+                _ctx.link().send_future(async move{
+                    let client = reqwest::Client::new();
+                    match client.post("http://127.0.0.1:8000/t/games").body(serde_json::to_string(&game).unwrap()).send().await{
+                        Ok(v) => {
+                            Msg::Record()
+                        }
+                        Err(err) => {
+                            Msg::Record()
+                        }
+                    }});
+            }
             Msg::ClickedColumn(column) => {
                 if self.is_game_over == false {
                     match column {
@@ -225,6 +249,7 @@ impl Component for Connect4Human {
                     self.render_background();
                 }
             }
+            Msg::Record() => {}
         }
         true
     }

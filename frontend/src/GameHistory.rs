@@ -5,16 +5,9 @@ use yew::{
 };
 use reqwest;
 use web_sys::console;
+use common::Backend::Game;
 
-#[derive(Clone,Debug, Serialize, Deserialize)]
-pub struct Game {
-    pub player1: String,
-    pub player2: String,
-	pub winner: String,
-	pub date: String,
-}
-
-pub struct ScoreBoard {
+pub struct GameHistory {
     // add any state necessary for the game
     state: FetchState<Vec<Game>>,
     data: Vec<Game>,
@@ -34,27 +27,28 @@ pub enum FetchStateMsg<T> {
     GetData,
 }
 
-impl ScoreBoard {
+impl GameHistory {
 	fn get_games(&self) -> Html {
         println!("{:?}",self.data);
-        let videos = self.data.iter().map(|video| html! {
+        let games = self.data.iter().enumerate().map(|(i,game)| html! {
 		    <tr>
-			    <td>{format!("{} ", video.player1)}</td>
-			    <td>{format!("{} ", video.player2)}</td>
-			    <td>{format!("{} ", video.winner)}</td>
-			    <td>{format!("{} ", video.date)}</td>
+                <td>{format!("{} ", i+1)}</td>
+                <td>{format!("{} ", game.gametype)}</td>
+			    <td>{format!("{} ", game.player1)}</td>
+			    <td>{format!("{} ", game.player2)}</td>
+			    <td>{format!("{} ", game.winner)}</td>
+			    <td>{format!("{} ", game.date)}</td>
 		    </tr>
 	    }).collect::<Html>();
-	    videos
+	    games
     }
 }
 
-impl Component for ScoreBoard {
+impl Component for GameHistory {
     type Message = FetchStateMsg<Vec<Game>>;
     type Properties = ();
 
     fn create(_ctx: &Context<Self>) -> Self {
-        
         Self {
             data: Vec::new(),
             state: FetchState::NotFetching,
@@ -76,9 +70,9 @@ impl Component for ScoreBoard {
             FetchStateMsg::GetData => {
                 _ctx.link().send_future(async move {
                     match reqwest::get("http://127.0.0.1:8000/games").await {
-                        Ok(makrup) => match makrup.json().await {
-                            Ok(makrup) => {
-                                FetchStateMsg::SetDataFetchState(FetchState::Success(makrup))
+                        Ok(v) => match v.json().await {
+                            Ok(v) => {
+                                FetchStateMsg::SetDataFetchState(FetchState::Success(v))
                             }
                             Err(err) => {
                                 FetchStateMsg::SetDataFetchState(FetchState::Failed)
