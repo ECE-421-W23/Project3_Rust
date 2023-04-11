@@ -7,7 +7,7 @@ trunk serve --open
 
 Inside Backend Folder Run do this:
 
-  In a Command Line Run
+  In a Command Line Run ( Ensure a data folder exists in backend)
   ```
   mongod --dbpath="data"
   ```
