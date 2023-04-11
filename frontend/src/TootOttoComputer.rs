@@ -4,18 +4,15 @@ use std::cell::RefCell;
 use std::f64::consts::PI;
 use std::rc::Rc;
 
+use common::TootOtto::{Piece, Player, TootOtto, Difficulty};
 use common::Backend::Game;
-use common::TootOtto::{Piece, Player, TootOtto};
 use stdweb::traits::*;
 use stdweb::unstable::TryInto;
 use stdweb::web::document;
 use stdweb::web::event::{ClickEvent, MouseDownEvent, ResizeEvent};
 use stdweb::web::html_element::{CanvasElement, SelectElement};
 use wasm_bindgen::{JsCast, JsValue, prelude::Closure};
-use wasm_bindgen_futures::JsFuture;
-// use stdweb::web::{FillRule, window, CanvasRenderingContext2d};
-use web_sys::{RequestInit, window};
-use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, HtmlInputElement, MouseEvent, Request, Response};
+use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, HtmlInputElement, MouseEvent};
 use yew::prelude::*;
 use reqwest;
 
@@ -28,10 +25,8 @@ pub struct TootOttoComputer {
     is_game_over: bool,
     is_game_draw: bool,
     selected_letter: char,
-    clicked_column: usize,
-    columns: usize,
-    rows: usize,
     current_player: Player,
+    difficulty: usize,
     p1_name_event: Callback<InputEvent>,
     disc_change_event: Callback<MouseEvent>,
     start_event: Callback<MouseEvent>,
@@ -66,7 +61,6 @@ impl TootOttoComputer {
                         Piece::O => {
                             context.set_fill_style(&JsValue::from("#ffff99"));
                         }
-                        _ => {}
                     }
                     context.begin_path();
                     context.arc(
@@ -75,7 +69,7 @@ impl TootOttoComputer {
                         25.0,
                         0.0,
                         2.0 * PI,
-                    );
+                    ).expect("Failed to fill text");;
                     context.fill();
                     context.set_font("bold 25px serif");
                     context.set_fill_style(&JsValue::from("#111"));
@@ -83,7 +77,7 @@ impl TootOttoComputer {
                         Piece::T => "T",
                         Piece::O => "O",
                     };
-                    context.fill_text(text, (75 * col + 92) as f64, (75 * row + 58) as f64);
+                    context.fill_text(text, (75 * col + 92) as f64, (75 * row + 58) as f64).expect("Failed to fill text");
                 }
             }
         }
@@ -99,7 +93,7 @@ impl TootOttoComputer {
         context.begin_path();
         for y in 0..6 {
             for x in 0..7 {
-                let err = context.arc(
+                let _err = context.arc(
                     (75 * x + 100) as f64,
                     (75 * y + 50) as f64,
                     25.0,
@@ -114,25 +108,24 @@ impl TootOttoComputer {
     }
 
     fn check_winner(&mut self) {
-        // TO-DO Add implementation to check for a draw
         match self.game.borrow_mut().winner() {
             None => {}
             Some(x) => {
-                if x == Player::AI {
+                if x == Player::Toot {
                     self.winner = self.p1_name.clone();
                     self.is_game_over = true;
                 } else {
-                    self.winner = self.p1_name.clone();
+                    self.winner = "Computer".parse().unwrap();
                     self.is_game_over = true;
                 }
-                let message = self.winner.to_string() + " wins - need to fix - Click on game board to reset";
+                let message = self.winner.to_string() + " wins - Click on game board to reset";
                 let canvas: HtmlCanvasElement = self.canvas.cast().unwrap();
                 let context: CanvasRenderingContext2d = canvas.get_context("2d").unwrap().unwrap().unchecked_into();
                 context.save();
                 context.set_font("bold 25px serif");
                 context.set_fill_style(&JsValue::from("#111"));
                 context.begin_path();
-                context.fill_text(&message, (150) as f64, (20) as f64);
+                context.fill_text(&message, (50) as f64, (20) as f64).expect("Failed to fill text");
                 context.restore();
                 &self.end_event.emit("end".to_string());
             }
@@ -146,7 +139,7 @@ impl TootOttoComputer {
             context.set_font("bold 25px serif");
             context.set_fill_style(&JsValue::from("#111"));
             context.begin_path();
-            context.fill_text(message, (150) as f64, (20) as f64);
+            context.fill_text(message, (50) as f64, (20) as f64).expect("Failed to fill text");
             context.restore();
             &self.end_event.emit("end".to_string());
         }
@@ -174,11 +167,23 @@ impl TootOttoComputer {
                 Player::AI => {}
             }
         }
-        self.game.borrow_mut().make_move_by_ai(2);
+        self.game.borrow_mut().make_move_by_ai();
     }
 
     fn new_game(&mut self) {
         self.game = Rc::new(RefCell::new(TootOtto::new()));
+        match self.difficulty{
+            1 => {
+                self.game.borrow_mut().set_difficulty(Difficulty::Easy);
+            },
+            2 => {
+                self.game.borrow_mut().set_difficulty(Difficulty::Medium);
+            },
+            3 => {
+                self.game.borrow_mut().set_difficulty(Difficulty::Hard);
+            },
+            _ => {},
+        }
         self.winner = "".to_string();
         self.is_game_over = false;
         self.is_game_draw = false;
@@ -204,10 +209,8 @@ impl Component for TootOttoComputer {
             is_game_over: false,
             is_game_draw: false,
             selected_letter: 'T',
-            clicked_column: 0,
-            columns: 7,
-            rows: 6,
             current_player: Player::Toot,
+            difficulty: 0,
             p1_name_event: _ctx.link().callback(|e: InputEvent| Msg::P1NameInput(e)),
             disc_change_event: _ctx.link().callback(|e: MouseEvent| {
                 let value = e.target().unwrap().dyn_into::<HtmlInputElement>().unwrap().value();
@@ -232,6 +235,26 @@ impl Component for TootOttoComputer {
             Msg::StartGame => {
                 if self.p1_name != "" {
                     self.is_game_started = true;
+                    // get the selected difficulty
+                    let document = web_sys::window().unwrap().document().unwrap();
+                    let difficulty_drop_down = document.query_selector("#difficulty_drop_down")
+                        .unwrap()
+                        .unwrap()
+                        .dyn_into::<web_sys::HtmlSelectElement>()
+                        .unwrap();
+                    self.difficulty = difficulty_drop_down.value().parse::<usize>().unwrap();
+                    match self.difficulty{
+                        1 => {
+                            self.game.borrow_mut().set_difficulty(Difficulty::Easy);
+                        },
+                        2 => {
+                            self.game.borrow_mut().set_difficulty(Difficulty::Medium);
+                        },
+                        3 => {
+                            self.game.borrow_mut().set_difficulty(Difficulty::Hard);
+                        },
+                        _ => {},
+                    }
                     let canvas: HtmlCanvasElement = self.canvas.cast().unwrap();
                     // let context: CanvasRenderingContext2d = canvas.get_context("2d")
                     //     .unwrap()
@@ -335,6 +358,14 @@ impl Component for TootOttoComputer {
                         </button>
 
                     </div>
+                    <div>
+                        <label for="difficulty_drop_down"> {"Difficulty: "} </label>
+                        <select id="difficulty_drop_down" style="margin-top: 5px">
+                        <option value=1 selected=true> {"Beginner"}</option>
+                        <option value=2 selected=false> {"Intermediate"}</option>
+                        <option value=3 selected=false> {"Professional"}</option>
+                        </select>
+                    </div>
                 </div>
                 </div>
             }
@@ -368,13 +399,4 @@ impl Component for TootOttoComputer {
             </>
         }
     }
-}
-
-macro_rules! enclose {
-    ( ($( $x:ident ),*) $y:expr ) => {
-        {
-            $(let $x = $x.clone();)*
-            $y
-        }
-    };
 }

@@ -1,3 +1,4 @@
+#![recursion_limit = "1024"]
 use yew::html::Scope;
 use yew::prelude::*;
 use yew_router::prelude::*;
@@ -46,7 +47,7 @@ impl Component for App {
         Self
     }
 
-    fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
+    fn update(&mut self, _ctx: &Context<Self>, _msg: Self::Message) -> bool {
         true
     }
 
