@@ -1,0 +1,15 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\backend",
+    "\\backend\\src",
+    "\\common",
+    "\\common\\src",
+    "\\frontend",
+    "\\frontend\\src",
+    "\\rustlang-rocket-mongodb",
+    "\\rustlang-rocket-mongodb\\src"
+  ],
+  "SelectedNode": "\\rustlang-rocket-mongodb\\Cargo.toml",
+  "PreviewInSolutionExplorer": false
+}
