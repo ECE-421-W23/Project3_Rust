@@ -101,26 +101,52 @@ impl Component for ScoreBoard {
             _ctx.link().send_message(FetchStateMsg::GetData);
         }
         html! {
-		    <div style = "margin-top: 75px">
-		    <div class="w3-container" id="services" style="margin-left:30%">
-		    <h5 class="w3-xxxlarge w3-text-red"><b>{"Game History"}</b></h5>
-		    <hr style="width:50px;border:5px solid red" class="w3-round"/>
-    
-		    <div id="game-stream">
-		    <table>
-			    <tr>
-				    <th>{"Game-ID"}</th>
-				    <th>{"Game-Type"}</th>
-				    <th>{"Player1"}</th>
-				    <th>{"Player2"}</th>
-				    <th>{"Winner"}</th>
-				    <th>{"Date"}</th>
-  			    </tr>
-			    { self.get_games() }
-		    </table>		
-			    </div>
-		    </div>
-		    </div>
+            <div style = "margin-top: 75px">
+            <div class="w3-container" id="services" style="margin-left:30%">
+            <h5 class="w3-xxxlarge w3-text-red"><b>{"Score Board"}</b></h5>
+            <hr style="width:50px;border:5px solid red" class="w3-round"/>
+                <div><h4>{"Games Won by Computer"}</h4></div>
+                    <table>
+			                <tr>
+			                    <th>{"Total Games Played"}</th>
+			                    <th>{"Games Against Computer"}</th>
+			                    <th>{"Games Computer Won"}</th>
+  			                </tr>
+                            { self.get_games() }
+	                </table>
+
+	            <br/>
+
+    	        <div><h4>{"Details of Games Won by Computer"}</h4></div>
+	            <div id="game-stream">
+	                <table>
+			            <tr>
+				            <th>{"Sl. No."}</th>
+				            <th>{"Game Type"}</th>
+			                <th>{"Winner"}</th>
+			                <th>{"Played Against"}</th>
+			                <th>{"When Played"}</th>
+  			            </tr>
+                        { self.get_games() }
+		            </table>
+
+		        <br/>
+
+    	        <div><h4>{"Details of Games Won by All Players"}</h4></div>
+	            <div id="game-stream">
+	                <table>
+			            <tr>
+				            <th>{"Sl. No."}</th>
+			                <th>{"Winner or Draw"}</th>
+			                <th>{"No. of Wins"}</th>
+  			            </tr>
+                        { self.get_games() }
+		            </table>
+			        </div>
+	        </div>
+	
+            </div>
+            </div>
         }
     }
 
