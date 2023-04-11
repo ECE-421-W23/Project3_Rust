@@ -219,7 +219,7 @@ impl Component for Connect4AI {
                 
                 _ctx.link().send_future(async move{
                     let client = reqwest::Client::new();
-                    match client.post("http://127.0.0.1:8000/t/games").body(serde_json::to_string(&game).unwrap()).send().await{
+                    match client.post("http://127.0.0.1:8000/post/games").body(serde_json::to_string(&game).unwrap()).send().await{
                         Ok(v) => {
                             Msg::Record()
                         }

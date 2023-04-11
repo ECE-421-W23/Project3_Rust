@@ -113,6 +113,6 @@ fn rocket() -> _ {
     rocket::build()
 	.manage(db)
 	.mount("/", routes![get_games])
-	.mount("/t", routes![add_games])
+	.mount("/post", routes![add_games])
 	.attach(CORS)
 }
