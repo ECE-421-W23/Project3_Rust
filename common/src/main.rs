@@ -2,9 +2,6 @@ use std::io;
 use std::io::Write;
 
 use common::Connect4::Connect4;
-use common::TootOtto::{Piece, Player, TootOtto};
-use common::TootOtto::Piece::T;
-use common::TootOtto::Player::Toot;
 
 fn main() {
     /*

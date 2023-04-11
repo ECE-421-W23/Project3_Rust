@@ -1,11 +1,10 @@
-use std::cmp::{max, min};
-
-use serde::{Deserialize, Serialize};
+use rand::{Rng};
 
 #[derive(Clone)]
 pub struct TootOtto {
     board: [[Option<Piece>; 7]; 6],
     current_player: Player,
+    difficulty: Difficulty,
 }
 
 #[derive(Copy, Clone, PartialEq, Debug)]
@@ -13,6 +12,14 @@ pub enum Piece {
     T,
     O,
 }
+
+#[derive(Copy, Clone, PartialEq, Debug)]
+pub enum Difficulty {
+    Easy,
+    Medium,
+    Hard,
+}
+
 
 #[derive(PartialEq, Clone)]
 pub enum Player {
@@ -35,6 +42,7 @@ impl TootOtto {
         TootOtto {
             board: [[None; 7]; 6],
             current_player: Player::Toot,
+            difficulty: Difficulty::Easy,
         }
     }
 
@@ -44,6 +52,20 @@ impl TootOtto {
 
     pub fn get_grid(&self) -> [[Option<Piece>; 7]; 6] {
         self.board.clone()
+    }
+
+    pub fn set_difficulty(&mut self, diff: Difficulty){
+        match diff {
+            Difficulty::Easy => {
+                self.difficulty = Difficulty::Easy;
+            }
+            Difficulty::Medium => {
+                self.difficulty = Difficulty::Medium;
+            }
+            Difficulty::Hard => {
+                self.difficulty = Difficulty::Hard;
+            }
+        }
     }
 
     pub fn top_row(&self, col: usize) -> usize {
@@ -94,19 +116,50 @@ impl TootOtto {
         self.board[row.unwrap()][column] = Some(piece);
     }
 
-    fn check_bounds(&self, col: usize) -> bool {
-        col < 7
-    }
+    // fn check_bounds(&self, col: usize) -> bool {
+    //     col < 7
+    // }
 
 
-    pub fn make_move_by_ai(&mut self, depth: usize) {
+    pub fn make_move_by_ai(&mut self) {
+        let mut depth:i32;
+        let mut rand_piece = Piece::T;
+        match self.difficulty{
+            Difficulty::Easy => {
+                if self.is_draw() || self.is_over() {
+                    return;
+                }
+                let mut rng = rand::thread_rng();
+                loop {
+                    let random_col = rng.gen_range(0..7);
+                    let rand_piece_no = rng.gen_range(0..2);
+                    match rand_piece_no{
+                        0 => {
+                            rand_piece = Piece::O;
+                        },
+                        _ => {}
+                    }
+                    if self.top_row(random_col) != 10 {
+                        self.place_piece(random_col, rand_piece);
+                        break;
+                    }
+                }
+                return;
+            }
+            Difficulty::Medium => {
+                depth = 2;
+            }
+            Difficulty::Hard => {
+                depth = 3;
+            }
+        }
         let mut maximizing_player = true;
-        let mut next_Toot = false;
+        let mut next_toot = false;
         // Let Toot be max and Otto be min
         match self.current_player {
             Player::Toot => {
                 maximizing_player = false;
-                next_Toot = true;
+                next_toot = true;
             }
             _ => {}
         };
@@ -114,13 +167,13 @@ impl TootOtto {
         self.current_player = Player::AI;
         // let mut current_state = self.board.clone();
         // let mut best_score = i32::MIN;
-        let (column, score, piece) = self.minimax(depth as i32, maximizing_player);
+        let (column, _, piece) = self.minimax(depth as i32, maximizing_player);
         if column != 10 {
             self.place_piece(column, piece);
         }
 
         // switch to the next player
-        if next_Toot == true {
+        if next_toot == true {
             self.current_player = Player::Toot;
         } else {
             self.current_player = Player::Otto;
@@ -129,7 +182,7 @@ impl TootOtto {
 
     pub fn minimax(&mut self, depth: i32, maximizing_player: bool) -> (usize, i32, Piece) {
         let (mut best_col, mut best_piece) = (0, Piece::T);
-        let mut best_score = 0;
+        let mut best_score:i32;
         if maximizing_player {
             best_score = -10000000;
         } else {
@@ -237,7 +290,7 @@ impl TootOtto {
     }
 
     fn get_score(&self, line: &[Option<Piece>; 4], maximizing: bool) -> i32 {
-        let mut score = 0;
+        let score = 0;
         // TOOT scores are positive, OTTO scores are negative
         // 10 for OO, -10 for TT
         for i in 0..line.len() - 3 {
@@ -301,14 +354,14 @@ impl TootOtto {
         None
     }
 
-    fn undo_move(&mut self, col: usize) {
-        for i in (0..6).rev() {
-            if self.board[i][col].is_some() {
-                self.board[i][col] = None;
-                break;
-            }
-        }
-    }
+    // fn undo_move(&mut self, col: usize) {
+    //     for i in (0..6).rev() {
+    //         if self.board[i][col].is_some() {
+    //             self.board[i][col] = None;
+    //             break;
+    //         }
+    //     }
+    // }
 
     pub fn winner(&self) -> Option<Player> {
         let mut right = [None; 4];

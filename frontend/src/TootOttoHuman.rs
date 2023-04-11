@@ -5,16 +5,8 @@ use std::f64::consts::PI;
 use std::rc::Rc;
 
 use common::TootOtto::{Piece, Player, TootOtto};
-use stdweb::traits::*;
-use stdweb::unstable::TryInto;
-use stdweb::web::document;
-use stdweb::web::event::{ClickEvent, MouseDownEvent, ResizeEvent};
-use stdweb::web::html_element::{CanvasElement, SelectElement};
 use wasm_bindgen::{JsCast, JsValue, prelude::Closure};
-use wasm_bindgen_futures::JsFuture;
-// use stdweb::web::{FillRule, window, CanvasRenderingContext2d};
-use web_sys::{RequestInit, window};
-use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, HtmlInputElement, MouseEvent, Request, Response};
+use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, HtmlInputElement, MouseEvent};
 use yew::prelude::*;
 
 pub struct TootOttoHuman {
@@ -27,17 +19,12 @@ pub struct TootOttoHuman {
     is_game_over: bool,
     is_game_draw: bool,
     selected_letter: char,
-    clicked_column: usize,
-    columns: usize,
-    rows: usize,
     current_player: Player,
     p1_name_event: Callback<InputEvent>,
     p2_name_event: Callback<InputEvent>,
     disc_change_event: Callback<MouseEvent>,
     start_event: Callback<MouseEvent>,
-    end_event: Callback<MouseEvent>,
     canvas: NodeRef,
-    context: Option<CanvasRenderingContext2d>,
 }
 
 pub enum Msg {
@@ -48,7 +35,6 @@ pub enum Msg {
     EndGame,
     SetDisc(String),
     ClickedColumn(Option<usize>),
-    Record(),
 }
 
 impl TootOttoHuman {
@@ -67,7 +53,6 @@ impl TootOttoHuman {
                         Piece::O => {
                             context.set_fill_style(&JsValue::from("#ffff99"));
                         }
-                        _ => {}
                     }
                     context.begin_path();
                     context.arc(
@@ -76,7 +61,7 @@ impl TootOttoHuman {
                         25.0,
                         0.0,
                         2.0 * PI,
-                    );
+                    ).expect("Failed to fill text");
                     context.fill();
                     context.set_font("bold 25px serif");
                     context.set_fill_style(&JsValue::from("#111"));
@@ -84,7 +69,7 @@ impl TootOttoHuman {
                         Piece::T => "T",
                         Piece::O => "O",
                     };
-                    context.fill_text(text, (75 * col + 92) as f64, (75 * row + 58) as f64);
+                    context.fill_text(text, (75 * col + 92) as f64, (75 * row + 58) as f64).expect("Failed to fill text");
                 }
             }
         }
@@ -100,7 +85,7 @@ impl TootOttoHuman {
         context.begin_path();
         for y in 0..6 {
             for x in 0..7 {
-                let err = context.arc(
+                let _err = context.arc(
                     (75 * x + 100) as f64,
                     (75 * y + 50) as f64,
                     25.0,
@@ -115,7 +100,6 @@ impl TootOttoHuman {
     }
 
     fn check_winner(&mut self) {
-        // TO-DO Add implementation to check for a draw
         match self.game.borrow_mut().winner() {
             None => {}
             Some(x) => {
@@ -133,7 +117,7 @@ impl TootOttoHuman {
                 context.set_font("bold 25px serif");
                 context.set_fill_style(&JsValue::from("#111"));
                 context.begin_path();
-                context.fill_text(&message, (50) as f64, (20) as f64);
+                context.fill_text(&message, (50) as f64, (20) as f64).expect("Failed to fill text");
                 context.restore();
             }
         };
@@ -146,7 +130,7 @@ impl TootOttoHuman {
             context.set_font("bold 25px serif");
             context.set_fill_style(&JsValue::from("#111"));
             context.begin_path();
-            context.fill_text(message, (50) as f64, (20) as f64);
+            context.fill_text(message, (50) as f64, (20) as f64).expect("Failed to fill text");
             context.restore();
         }
     }
@@ -207,9 +191,6 @@ impl Component for TootOttoHuman {
             is_game_over: false,
             is_game_draw: false,
             selected_letter: 'T',
-            clicked_column: 0,
-            columns: 7,
-            rows: 6,
             current_player: Player::Toot,
             p1_name_event: _ctx.link().callback(|e: InputEvent| Msg::P1NameInput(e)),
             p2_name_event: _ctx.link().callback(|e: InputEvent| Msg::P2NameInput(e)),
@@ -218,9 +199,7 @@ impl Component for TootOttoHuman {
                 Msg::SetDisc(value)
             }),
             start_event: _ctx.link().callback(|_| Msg::StartGame),
-            end_event: Default::default(),
             canvas: NodeRef::default(),
-            context: None,
         }
     }
 
@@ -299,7 +278,6 @@ impl Component for TootOttoHuman {
                     self.render_background();
                 }
             }
-            Msg::Record() => {}
         }
         true
     }
@@ -360,13 +338,4 @@ impl Component for TootOttoHuman {
             </>
         }
     }
-}
-
-macro_rules! enclose {
-    ( ($( $x:ident ),*) $y:expr ) => {
-        {
-            $(let $x = $x.clone();)*
-            $y
-        }
-    };
 }
